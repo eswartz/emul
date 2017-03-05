@@ -114,7 +114,7 @@ public class XMLUtils {
 		String text = getText(element);
 		if (text != null)
 			return text.trim();
-		return null;
+		return "";
 	}
 
 	public static Element getChildElementNamed(Element element, String name) {

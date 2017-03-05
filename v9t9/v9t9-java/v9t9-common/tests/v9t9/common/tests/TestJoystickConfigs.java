@@ -16,7 +16,7 @@ import v9t9.common.keyboard.JoystickRole;
  * @author ejs
  *
  */
-public class TestControllerConfigs {
+public class TestJoystickConfigs {
 
 	private ControllerIdentifier gp_x = new ControllerIdentifier("USB Gamepad", 5, "x"); 
 	private ControllerIdentifier gp_y = new ControllerIdentifier("USB Gamepad", 7, "y");

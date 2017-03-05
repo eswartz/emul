@@ -148,7 +148,7 @@ public class JoystickMappingDialog extends Composite implements IPropertyListene
 	private CLabel statusLabel;
 	private Runnable scanTask;
 
-	private IProperty joystickRescanProperty;
+	private IProperty controllerRescanProperty;
 	private IProperty joystick1ConfigProperty;
 	private IProperty joystick2ConfigProperty;
 	
@@ -169,7 +169,7 @@ public class JoystickMappingDialog extends Composite implements IPropertyListene
 		dialogSettings = machine.getSettings().getMachineSettings().getHistorySettings().
 				findOrAddSection(SECTION_CONTROLLER_MAPPINGS);
 
-		joystickRescanProperty = Settings.get(machine, SwtLwjglKeyboardHandler.settingJoystickRescan);
+		controllerRescanProperty = Settings.get(machine, SwtLwjglKeyboardHandler.settingControllerRescan);
 
 		joystick1ConfigProperty = Settings.get(machine, SwtLwjglKeyboardHandler.settingJoystick1Config);
 		joystick2ConfigProperty = Settings.get(machine, SwtLwjglKeyboardHandler.settingJoystick2Config);
@@ -341,7 +341,7 @@ public class JoystickMappingDialog extends Composite implements IPropertyListene
 						"Reset?", 
 						"This will throw away any customizations and reset mappings to default.\n\nContinue?");
 				if (ret) {
-					joystickRescanProperty.setBoolean(true);
+					controllerRescanProperty.setBoolean(true);
 				}
 			}
 		});

@@ -12,22 +12,31 @@ import org.apache.log4j.Logger;
 import ejs.base.utils.TextUtils;
 
 /**
- * A configuration of controller(s).
+ * A configuration of how controller(s) map to the actions of a joystick.
  * 
  * This is serialized like:
- *
+ * 
  * <pre>
- "Fancy \"PS\" Controller!","b0",2=BUTTON
-"Fancy \"PS\" Controller!","b1",3=BUTTON
-"Fancy \"PS\" Controller!","b2",10=BUTTON
-"Fancy \"PS\" Controller!","b3",11=BUTTON
-"Fancy \"PS\" Controller!","rx",9=X_AXIS
-"Fancy \"PS\" Controller!","ry",5=Y_AXIS
-"Fancy \"PS\" Controller!","x",8=X_AXIS
-"Fancy \"PS\" Controller!","y",4=Y_AXIS
-</pre>
+ *  "Fancy \"PS\" Controller!","b0",2=BUTTON
+ * "Fancy \"PS\" Controller!","b1",3=BUTTON
+ * "Fancy \"PS\" Controller!","b2",10=BUTTON
+ * "Fancy \"PS\" Controller!","b3",11=BUTTON
+ * "Fancy \"PS\" Controller!","x",8=X_AXIS
+ * "Fancy \"PS\" Controller!","y",4=Y_AXIS
+ * "Something Else","rx",9=X_AXIS
+ * "Something Else","ry",5=Y_AXIS
+ * </pre>
+ * 
+ * The first string is the net.java.games.input.Controller's name; the second is
+ * the name of the .java.games.input.Component, and the third entry is an
+ * integer telling where this item was discovered originally in its parent (in
+ * case the name changes).
+ * 
+ * Each entry is mapped to a JoystickRole function, one of which is IGNORE for
+ * cases like the Retro-Link USB joystick, which on OSX has a stuck X-axis.
+ * 
  * @author ejs
- *
+ * 
  */
 public class ControllerConfig {
 	private static final Logger logger = Logger.getLogger(ControllerConfig.class);
