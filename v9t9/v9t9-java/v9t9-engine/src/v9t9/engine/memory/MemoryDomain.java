@@ -596,7 +596,8 @@ public class MemoryDomain implements IMemoryAccess, IPersistable, IMemoryDomain 
 		IMemoryEntry[] mapped = (IMemoryEntry[]) mappedEntries.toArray(new IMemoryEntry[mappedEntries.size()]);
 		for (IMemoryEntry entry : mapped) {
 			try {
-				entry.save();
+				if (entry != null)
+					entry.save();
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
