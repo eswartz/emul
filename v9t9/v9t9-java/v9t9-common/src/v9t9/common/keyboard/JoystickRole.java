@@ -7,6 +7,10 @@ public enum JoystickRole {
 	IGNORE,
 	X_AXIS,
 	Y_AXIS,
-	POV,
+	DIRECTIONAL,
+	LEFT,
+	RIGHT,
+	UP,
+	DOWN,
 	BUTTON
 }
