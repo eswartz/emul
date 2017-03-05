@@ -29,6 +29,7 @@ import org.eclipse.jface.layout.GridLayoutFactory;
 import org.eclipse.jface.resource.JFaceResources;
 import org.eclipse.jface.viewers.CellEditor;
 import org.eclipse.jface.viewers.ColumnViewerEditor;
+import org.eclipse.jface.viewers.ColumnViewerEditorActivationEvent;
 import org.eclipse.jface.viewers.ColumnViewerEditorActivationStrategy;
 import org.eclipse.jface.viewers.ComboBoxCellEditor;
 import org.eclipse.jface.viewers.FocusCellOwnerDrawHighlighter;
@@ -376,8 +377,6 @@ public class JoystickMappingDialog extends Composite implements IPropertyListene
 				if (!update[0])
 					return;
 				
-				changed.clear();
-				
 				for (Controller controller : controllers) {
 					controller.poll();
 				}
@@ -386,24 +385,22 @@ public class JoystickMappingDialog extends Composite implements IPropertyListene
 					ControllerIdentifier id = ent.getValue();
 					Component component = ent.getKey();
 						
+//					float data = component.getPollData();
 					float data = ((int) Math.round(component.getPollData() * 8)) / 8.0f;
-//						float data = component.getPollData();
-					if (!lastValues.containsKey(id) || lastValues.get(id) != data) {
+					if (!lastValues.containsKey(id) 
+							|| lastValues.get(id) != data) {
 						changed.add(id);
 					}
 					lastValues.put(id, data);
 				}
 
 				synchronized (changedTimes) {
-					boolean any = false;
-					
 					final long now = System.currentTimeMillis();
 					for (ControllerIdentifier id : changed) {
 						changedTimes.put(now, id);
-						any = true;
 					}
 					
-					if (any || lastUpdateTime < now + 3000) {
+					if (!changed.isEmpty() || lastUpdateTime < now + 3000) {
 						if (updater == null) {
 							updater = new Runnable() {
 								@Override
@@ -411,21 +408,22 @@ public class JoystickMappingDialog extends Composite implements IPropertyListene
 									if (isDisposed())
 										return;
 									
-									Set<ControllerIdentifier> changed;
+									Set<ControllerIdentifier> toRedraw;
 									synchronized (changedTimes) {
 										updater = null;
 										
 										SortedMap<Long, ControllerIdentifier> stale = changedTimes.headMap(lastUpdateTime - 1000);
 										SortedMap<Long, ControllerIdentifier> nowChanged = changedTimes.tailMap(lastUpdateTime);
 
-										changed = new HashSet<ControllerIdentifier>(nowChanged.values());
-										changed.addAll(stale.values());
+										toRedraw = new HashSet<ControllerIdentifier>(nowChanged.values());
+										toRedraw.addAll(stale.values());
 				
 										stale.clear();
 									}
-//									System.out.println(changed);
-									viewer.update( changed.toArray(), null); // new String[] { JOY_PROPERTY, VALUE_PROPERTY });
+//									System.out.println(toRedraw);
+									viewer.update(toRedraw.toArray(), null);
 									
+									changed.clear();
 									lastUpdateTime = now;
 								}
 							};
@@ -524,7 +522,20 @@ public class JoystickMappingDialog extends Composite implements IPropertyListene
 
 		FocusCellOwnerDrawHighlighter highlighter = new FocusCellOwnerDrawHighlighter(viewer);
 		TableViewerFocusCellManager focusCellManager = new TableViewerFocusCellManager(viewer, highlighter);
-		ColumnViewerEditorActivationStrategy actSupport = new ColumnViewerEditorActivationStrategy(viewer);
+		ColumnViewerEditorActivationStrategy actSupport = new ColumnViewerEditorActivationStrategy(viewer) {
+			protected boolean isEditorActivationEvent(
+					ColumnViewerEditorActivationEvent event) {
+				boolean is = super.isEditorActivationEvent(event);
+				if (!is) {
+					// Mac doesn't want to activate on enter or space or anything
+					if (event.eventType == ColumnViewerEditorActivationEvent.KEY_PRESSED
+							&& (event.keyCode == '\r' || event.keyCode == ' ')) {
+						is = true;
+					}
+				}
+				return is;
+			}
+		};
 	
 		TableViewerEditor.create(viewer, focusCellManager, actSupport, ColumnViewerEditor.TABBING_HORIZONTAL
 				| ColumnViewerEditor.TABBING_MOVE_TO_ROW_NEIGHBOR
@@ -558,8 +569,6 @@ public class JoystickMappingDialog extends Composite implements IPropertyListene
 				});
 			}
 		});
-
-		//viewer.setInput(new Object());
 		
 		return viewer;
 	}
