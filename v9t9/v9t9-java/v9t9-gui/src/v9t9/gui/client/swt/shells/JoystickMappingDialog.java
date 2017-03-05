@@ -231,7 +231,7 @@ public class JoystickMappingDialog extends Composite implements IPropertyListene
 					case JOY_COLUMN: {
 						Integer j1 = joyFor.get(id1); 
 						Integer j2 = joyFor.get(id2); 
-						diff = (j1 != null ? j1 : 0) - (j2 != null ? j2 : 0);
+						diff = (j1 != null && j1 > 0 ? j1 : 999) - (j2 != null && j2 > 0 ? j2 : 999);
 						break;
 					}
 					case ROLE_COLUMN: {
