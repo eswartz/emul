@@ -116,6 +116,9 @@ public class SwtLwjglKeyboardHandler extends SwtKeyboardHandler {
 		scanTask = new Runnable() {
 			@Override
 			public void run() {
+				for (Controller controller : controllers) {
+					controller.poll();
+				}
 				scanJoystick(keyboardState, joystick1Handlers, 1);
 				scanJoystick(keyboardState, joystick2Handlers, 2);
 			}
@@ -133,35 +136,87 @@ public class SwtLwjglKeyboardHandler extends SwtKeyboardHandler {
 			}
 		});
 	}
+	
+	public static Map<Controller, Map<ControllerIdentifier, Component>> getSupportedControllerComponents() {
+		Map<Controller, Map<ControllerIdentifier, Component>> cmap = new HashMap<Controller, Map<ControllerIdentifier, Component>>();
+		 
+		for (Controller controller : ControllerEnvironment.getDefaultEnvironment().getControllers()) {
+			if (controller.getComponent(Identifier.Axis.X) == null || 
+					controller.getComponent(Identifier.Axis.Y) == null ||
+					controller.getType() == Controller.Type.MOUSE)
+				continue;
 
+			cmap.put(controller, fetchComponents(controller));
+		}
+		return cmap;
+	}
+
+
+	/**
+	 * Get a mapping of available components
+	 * @param controller
+	 */
+	private static Map<ControllerIdentifier, Component> fetchComponents(Controller controller) {
+		Map<ControllerIdentifier, Component> map = new LinkedHashMap<ControllerIdentifier, Component>();
+		
+		String controllerName = controller.getName();
+		int index = 0;
+		for (Component c : controller.getComponents()) {
+			Identifier cid = c.getIdentifier();
+			boolean willUse = false; 
+			if (cid == Identifier.Axis.X || cid == Identifier.Axis.RX || cid == Identifier.Axis.Z) {
+				willUse = true;
+			} 
+			else if (cid == Identifier.Axis.Y || cid == Identifier.Axis.RY || cid == Identifier.Axis.RZ) {
+				willUse = true;
+			}
+			else if (cid == Identifier.Axis.POV) {
+				willUse = true;
+			}
+			else if (cid instanceof Button) {
+				willUse = true;
+			}
+
+			if (willUse) {
+				String name = c.getName();
+				
+				map.put(new ControllerIdentifier(controllerName, index, name),
+						c);
+			}
+			
+			index++;
+		}
+		
+		return map;
+	}
+
+	
 	/**
 	 * Rescan the connected controllers, and reestablish mappings
 	 * from user selections or pick mappings from scratch.
 	 */
 	private synchronized void updateControllers() {
-		controllers = ControllerEnvironment.getDefaultEnvironment().getControllers();
+		Map<Controller, Map<ControllerIdentifier, Component>> cmap = getSupportedControllerComponents();
+		
+		controllers = cmap.keySet().toArray(new Controller[cmap.size()]);
 		controllerMap.clear();
 		
 		ControllerConfig jsconfig1 = null;
 		Map<ControllerIdentifier, Component> js1Unused = null;
 		ControllerConfig jsconfig2 = null;
+		Map<ControllerIdentifier, Component> js2Unused = null;
 		
 		// find valid controllers
 		StringBuilder sb = new StringBuilder();
 		
 		for (Controller controller : controllers) {
-			if (controller.getComponent(Identifier.Axis.X) == null || 
-					controller.getComponent(Identifier.Axis.Y) == null ||
-					controller.getType() == Controller.Type.MOUSE)
-				continue;
-			
 			String name = controller.getName();
 			System.out.println("Using controller: " + name);
 			controllerMap.put(name, controller);
 			
 			if (jsconfig1 == null) {
 				// try to use what's available in the first controller for joystick #1
-				Map<ControllerIdentifier, Component> comps = fetchComponents(controller);
+				Map<ControllerIdentifier, Component> comps = new HashMap<ControllerIdentifier, Component>(cmap.get(controller));
 
 				jsconfig1 = initializeConfig(1, comps);
 				
@@ -169,7 +224,11 @@ public class SwtLwjglKeyboardHandler extends SwtKeyboardHandler {
 				
 			} else if (jsconfig2 == null) {
 				// for the second joystick, try to use the new controller
-				jsconfig2 = initializeConfig(2, fetchComponents(controller));
+				Map<ControllerIdentifier, Component> comps = new HashMap<ControllerIdentifier, Component>(cmap.get(controller));
+				
+				jsconfig2 = initializeConfig(2, comps);
+				
+				js2Unused = comps;
 			}
 			
 			sb.append(name).append('\n');
@@ -183,8 +242,16 @@ public class SwtLwjglKeyboardHandler extends SwtKeyboardHandler {
 		if (jsconfig1 != null) {
 			// record all the remaining buttons to joy #1
 			for (Entry<ControllerIdentifier, Component> ent : js1Unused.entrySet()) {
-				if (ent.getValue() .getIdentifier() instanceof Identifier.Button) {
+				if (ent.getValue().getIdentifier() instanceof Identifier.Button) {
 					jsconfig1.map(ent.getKey(), JoystickRole.BUTTON);
+				}
+			}
+		}
+		if (jsconfig2 != null) {
+			// record all the remaining buttons to joy #1
+			for (Entry<ControllerIdentifier, Component> ent : js2Unused.entrySet()) {
+				if (ent.getValue().getIdentifier() instanceof Identifier.Button) {
+					jsconfig2.map(ent.getKey(), JoystickRole.BUTTON);
 				}
 			}
 		}
@@ -209,26 +276,6 @@ public class SwtLwjglKeyboardHandler extends SwtKeyboardHandler {
 		}
 		
 		controllerConfig.setString(currentConfig);
-	}
-
-	/**
-	 * Get a mapping of available components
-	 * @param controller
-	 */
-	private Map<ControllerIdentifier, Component> fetchComponents(Controller controller) {
-		Map<ControllerIdentifier, Component> map = new LinkedHashMap<ControllerIdentifier, Component>();
-		
-		String controllerName = controller.getName();
-		int index = 0;
-		for (Component c : controller.getComponents()) {
-			String name = c.getName();
-			
-			map.put(new ControllerIdentifier(controllerName, index, name),
-					c);
-			index++;
-		}
-		
-		return map;
 	}
 
 	/**
@@ -337,22 +384,29 @@ public class SwtLwjglKeyboardHandler extends SwtKeyboardHandler {
 				continue;
 			}
 			
-			Component[] components =  controller.getComponents();
+			Component[] components = controller.getComponents();
 			
 			Component component = null;
-			if (components.length > id.index) {
-				component = components[id.index];
-			} else {
-				for (Component c : components) {
-					if (c.getName().equals(id.name)) { 
-						component = c;
+			
+			// find the matching name, and hopefully the index
+			Component cand = null;
+			int index = 0;
+			for (Component c : components) {
+				if (c.getName().equals(id.name)) { 
+					cand = c;
+					if (index == id.index) {
+						component = cand;
 						break;
 					}
 				}
+				index++;
 			}
-			
-			if (component == null) {
-				logger.warn("did not find component for incoming " + id + " in " + id.controllerName);
+			if (cand != null && component == null) {
+				component = cand;
+				logger.warn("found component but not at expected index for '" + id + "' in " + id.controllerName);
+			}
+			else if (component == null) {
+				logger.warn("did not find for '" + id + "' in " + id.controllerName);
 				continue;
 			}
 			
@@ -371,30 +425,21 @@ public class SwtLwjglKeyboardHandler extends SwtKeyboardHandler {
 		
 		for (IControllerHandler joystickHandler : joystickHandlers) {
 			
-			if (joystickHandler.getController().poll()) {
-				joystickHandler.setFailedLast(false);
-				joystickHandler.setJoystick(joy, state);
-				
-				if (joystickHandler.getRole() == JoystickRole.X_AXIS) {
-					x += state.getJoystick(joy, IKeyboardState.JOY_X);
-				}
-				else if (joystickHandler.getRole() == JoystickRole.Y_AXIS) {
-					y += state.getJoystick(joy, IKeyboardState.JOY_Y);
-				}
-				else if (joystickHandler.getRole() == JoystickRole.POV) {
-					x += state.getJoystick(joy, IKeyboardState.JOY_X);
-					y += state.getJoystick(joy, IKeyboardState.JOY_Y);
-				}
-				else if (joystickHandler.getRole() == JoystickRole.BUTTON) {
-					pressed |= state.getJoystick(joy, IKeyboardState.JOY_B) != 0;
-				}
-			} else {
-				if (!joystickHandler.isFailedLast()) {
-					// maybe unplugged?
-					state.setJoystick(joy, IKeyboardState.JOY_X | IKeyboardState.JOY_Y | IKeyboardState.JOY_B, 
-							0, 0, false);
-					joystickHandler.setFailedLast(true);
-				}
+			joystickHandler.setFailedLast(false);
+			joystickHandler.setJoystick(joy, state);
+			
+			if (joystickHandler.getRole() == JoystickRole.X_AXIS) {
+				x += state.getJoystick(joy, IKeyboardState.JOY_X);
+			}
+			else if (joystickHandler.getRole() == JoystickRole.Y_AXIS) {
+				y += state.getJoystick(joy, IKeyboardState.JOY_Y);
+			}
+			else if (joystickHandler.getRole() == JoystickRole.POV) {
+				x += state.getJoystick(joy, IKeyboardState.JOY_X);
+				y += state.getJoystick(joy, IKeyboardState.JOY_Y);
+			}
+			else if (joystickHandler.getRole() == JoystickRole.BUTTON) {
+				pressed |= state.getJoystick(joy, IKeyboardState.JOY_B) != 0;
 			}
 		}
 		

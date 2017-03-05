@@ -153,11 +153,25 @@ public class ControllerConfig {
 	}
 
 	public JoystickRole find(ControllerIdentifier id) {
-		return mapping.get(id);
+		JoystickRole role = mapping.get(id);
+		if (role == null)
+			role = JoystickRole.IGNORE;
+		return role;
 	}
 	
 	public Map<ControllerIdentifier, JoystickRole> getMap() {
 		return Collections.unmodifiableMap(mapping);
+	}
+
+	public void mergeFrom(ControllerConfig other) {
+		mapping.putAll(other.getMap());
+	}
+
+	/**
+	 * @param id
+	 */
+	public void remove(ControllerIdentifier id) {
+		mapping.remove(id);
 	}
 
 }

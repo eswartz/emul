@@ -551,7 +551,12 @@ public class SwtWindow extends BaseEmulatorWindow {
 			toolShell.toggle();
 		}
 		else {
-			toolShell = createToolShell(toolId, toolShellFactory);
+			try {
+				toolShell = createToolShell(toolId, toolShellFactory);
+			} catch (Throwable t) {
+				t.printStackTrace();
+				machine.getEventNotifier().notifyEvent(machine, Level.ERROR, "failed to create tool shell: " + t.getMessage());
+			}
 		}
 		return toolShell;
 	}
