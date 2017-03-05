@@ -31,6 +31,7 @@ import v9t9.common.video.VdpColorManager;
 import v9t9.common.video.VdpFormat;
 import v9t9.common.video.VdpFormat.Layout;
 import v9t9.tools.utils.Category;
+import v9t9.tools.utils.CubePaletteMaker;
 import v9t9.tools.utils.ToolUtils;
 import v9t9.video.ImageDataCanvas24Bit;
 import v9t9.video.common.ImageUtils;
@@ -55,63 +56,6 @@ import gnu.getopt.Getopt;
 @Category(Category.OTHER)
 public class ConvertImages {
 	private static final String PROGNAME = ConvertImages.class.getSimpleName();
-
-	static class CubePaletteMaker {
-		byte[][] pal;
-		
-		CubePaletteMaker(int num, int rs, int gs, int bs, boolean pure) {
-			pal = new byte[num][];
-			int idx = 0;
-			
-			if (pure) {
-				// span 0 to 255 in each channel
-				for (int r = 0; r < rs; r++) {
-					for (int g = 0; g < gs; g++) {
-						for (int b = 0; b < bs; b++) {
-							pal[idx] = new byte[] { 
-									(byte) (r*255/(rs-1)), 
-									(byte) (g*255/(gs-1)),
-									(byte) (b*255/(bs-1)) 
-							};
-							idx++;
-						}
-					}
-				}
-			} else {
-				// always have non-pure colors, by drawing a line
-				// through each color axis that starts 1/2 a step
-				// above 0 and ends 1/2 a step below 255,
-				// where a step is the distance between successive 
-				// increments
-				for (int r = 0; r < rs; r++) {
-					for (int g = 0; g < gs; g++) {
-						for (int b = 0; b < bs; b++) {
-							pal[idx] = new byte[] { 
-									(byte) ((r*255/rs)+128/rs), 
-									(byte) ((g*255/gs)+128/gs),
-									(byte) ((b*255/bs)+128/bs) 
-							};
-							idx++;
-						}
-					}
-				}
-			}
-
-			// when pure, black and white are generated
-			int greys = num - idx + (pure ? 1 : -1);
-			int g = pure ? 1 : 0;
-			while (idx < num) {
-				byte gr = (byte) (g*255/greys);
-				pal[idx] = new byte[] { gr, gr, gr };
-				g++;
-				idx++;
-			}
-		}
-		
-		byte[][] getPalette() {
-			return pal;
-		}
-	}
 
 	static Map<String,byte[][]> stockPalettes = new HashMap<String, byte[][]>();
 	
