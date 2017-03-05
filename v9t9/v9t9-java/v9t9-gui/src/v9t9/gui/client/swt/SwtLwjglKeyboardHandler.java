@@ -47,21 +47,21 @@ public class SwtLwjglKeyboardHandler extends SwtKeyboardHandler {
 
 	static public final SettingSchema settingControllerConfig = new SettingSchema(
 			ISettingsHandler.USER,
-			"LwjglControllerConfig", "");
+			"ControllerConfig", "");
 	
 	static public final SettingSchema settingJoystick1Config = new SettingSchema(
 			ISettingsHandler.USER,
-			"LwjglJoystick1Config", "");
+			"Joystick1Config", "");
 	
 	static public final SettingSchema settingJoystick2Config = new SettingSchema(
 			ISettingsHandler.USER,
-			"LwjglJoystick2Config", "");
+			"Joystick2Config", "");
 	
 	static public final SettingSchema settingJoystickRescan = new SettingSchema(
 			ISettingsHandler.TRANSIENT,
-			"LwjglJoystickRescan", false);
+			"JoystickRescan", false);
 	
-	static boolean DEBUG = true;
+	static boolean DEBUG = false;
 	
 	private Controller[] controllers; 
 	private Map<String, Controller> controllerMap = new HashMap<String, Controller>();
