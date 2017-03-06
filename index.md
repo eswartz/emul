@@ -49,6 +49,7 @@ V9t9 emulates the TI-99/4A on your computer.
 It supports:
 </p>
 <ul>
+    <li>Configurable PC controller to joystick mapping</li>
     <li>RS232/PIO output and TI Impact Printer emulation</li>
     <li>Reading/writing cassette recordings to files</li>
 	<li>Drag and drop / auto-detection of modules, disks, demos, 99/4A files</li>
@@ -91,6 +92,25 @@ Recent Changes
 ===========
 
 <span class="timestamp"> </span>
+
+
+<h2>2017/03/05 <a href="http://s3.amazonaws.com/V9t9/data/v9t9-170305.zip">(download)</a></h2>
+<ul><b>New/published features:</b>
+    <li>Allow configuring PC controller to joystick mappings</li>
+    <li>Extract image importer into its own tool (v9t9.sh -tool ConvertImages), with enhanced support for various 4/8/15/16 bit depth modes and palettes</li>
+</ul>
+<ul><b>Bug fixes:</b>
+    <li>Allow editing the way controllers map to joysticks <a href="https://github.com/eswartz/emul/issues/13">(bug #13)</a></li>
+    <li>Fix detection of keyboard in certain modules <a href="https://github.com/eswartz/emul/issues/9">(bug #9)</a></li>
+    <li>Find P-Code binaries more reliably <a href="https://github.com/eswartz/emul/issues/8">(bug #8)</a></li>
+    <li>Improve keyboard mapping for joysticks <a href="https://github.com/eswartz/emul/issues/6">(bug #6)</a></li>
+	<li>Add help to v9t9.sh</li>
+    <li>If v9t9 crashes on Linux, due to PulseAudio issues, you can pass <tt>-Dv9t9.sound.java=true</tt> to use Java implementation</li>
+    <li>Avoid cases where configuration settings are lost on macOS</li>
+    <li>Fix bug in X instruction</li>
+    <li>Various disassembler/assembler fixes</li>
+</ul>
+
 
 <h2>2015/07/21 <a href="http://s3.amazonaws.com/V9t9/data/v9t9-150721.zip">(download)</a></h2>
 <ul><b>New/published features:</b>
@@ -228,6 +248,134 @@ Alternately, run a `Terminal` and type:
 
     cd /path/to/extracted/v9t9
     ./v9t9.sh
+
+
+Keyboard Mappings
+========
+
+The 99/4A keyboard has 40 keys and your keyboard has more.  The 99/4A formed the rest of the ASCII character set using the "Fctn" key with other alphanumeric keys.  Also, 99/4A programs often refer to symbolic key names like "REDO" and "PROC'D", which map to "Fctn" plus number keys.
+
+In V9t9, use "`Alt`" for "`Fctn`".
+
+These are the `Fctn-`+_number_ mappings:
+
+* `Fctn-1` = `DELETE`
+* `Fctn-2` = `INSERT`
+* `Fctn-3` = `ERASE`
+* `Fctn-4` = `CLEAR`  (this also stops BASIC programs and some RS232/PIO device operations; hold it down)
+* `Fctn-5` = `BEGIN`
+* `Fctn-6` = `PROC'D`
+* `Fctn-7` = `AID` (often used for help)
+* `Fctn-8` = `REDO`
+* `Fctn-9` = `BACK` (like Esc)
+
+These keys that don't exist on the 99/4A are automatically mapped as follows by V9t9.  
+
+These choices try to align with the patterns of typical 99/4A software.  If you object, please file a feature request!
+
+* `Arrow Down` = `Fctn-X`
+* `Arrow Up` = `Fctn-E`
+* `Arrow Left` = `Fctn-S`
+* `Arrow Right` = `Fctn-D`
+* `Home` = `Fctn-5` (BEGIN)
+* `End` = `Fctn-0`
+* `Insert` = `Fctn-2` (INSERT)
+* `Delete` = `Fctn-1` (DELETE)
+
+(The keys above are the same for the numeric keypad when Num Lock is enabled and joystick mode is not enabled.)
+
+* `Page Up` = `Fctn-6` (PROC'D)
+* `Page Down` = `Fctn-4` (CLEAR)
+* `F`*number* = `Fctn-`*number*
+
+Joystick Mappings
+====
+
+The standard 99/4A system came with two joysticks -- *aka* "handheld controllers".
+
+V9t9 provides several ways to emulate the 99/4A joysticks.
+
+PC Controllers
+----
+
+V9t9 can use connected PC controllers or joysticks and map them to 99/4A joysticks.  
+
+* V9t9 only selects controllers with X and Y controls which don't act like mice.
+* You must restart V9t9 for it to detect and use changes in connected joysticks.
+* Select the "Joystick" icon in the left-hand toolbar to configure how the connected 
+controllers map to the TI Joystick.
+* This dialog (in `Interactive` mode) shows live updates of whichever controllers were detected at startup
+and allows you to assign their components to Joystick 1 or 2 (or neither) and then
+choose how each component contributes to the joystick.
+
+   * `IGNORE`: the component is not used (handy for buggy USB controllers with stuck values)
+   * `X_AXIS`, `Y_AXIS`: map an analog control to the X or Y axes
+   * `DIRECTIONAL`: map a single analog control to X and Y axes
+   * `UP`, `DOWN`, `LEFT`, `RIGHT`: map buttons to these directions (useful for Playstation 3 directional-pad buttons)
+   * `BUTTON`: map the button to Fire
+
+* You may also edit the configuration (`Edit` mode).  The syntax should be somewhat obvious.
+
+V9t9 will keep track of various combinations of detected controllers, but may not migrate
+settings from e.g. controller A if you run with controllers A and B the next time.  
+
+Whatever edits you make in the `Interactive` or `Edit` modes applies only for the specific
+controller setup active when you run V9t9.
+
+See `~/.v9t9j/config` 
+and `ControllerConfig` and `Joystick1Config` and `Joystick2Config` for details
+if you want to copy settings between controller configurations without doing this by hand.
+
+Emulating with host keyboard
+----
+
+V9t9 can use the keyboard's numeric keypad as "joystick #1" (and also "joystick #2" if you enjoy a difficult challenge).  
+
+Press *Scroll Lock* to toggle between modes.  
+
+By default the numeric keypad is used for ASCII numbers or 99/4A keyboard arrows (whatever `Num Lock` indicates).  You'll see a notification to the lower-right telling you the current mode.
+
+When you see "Using numpad for joystick #1 (shift for #2)", you can use the numeric keypad.
+
+<pre>
+    8
+
+4   5   6      fire = 'Enter', '+', or '-'   reset = 5 (in case something's stuck)
+
+    2
+</pre>
+
+If you need to emulate "joystick #2", hold down `Shift`.  (I told you it'd be a challenge.)
+
+Standard keyboard mappings
+---
+
+99/4A programs usually support keyboard-only setups:
+
+Player 1:
+
+<pre>
+    E      
+
+S       D      fire = Q
+
+    X
+</pre>
+
+Player 2:
+
+<pre>
+    I
+
+J       K      fire = Y
+
+    M
+</pre>
+
+
+
+
+
 
 <hr/>
 
