@@ -8,5 +8,6 @@
 </listAttribute>
 <stringAttribute key="org.eclipse.jdt.launching.MAIN_TYPE" value="v9t9.gui.Emulator"/>
 <stringAttribute key="org.eclipse.jdt.launching.PROJECT_ATTR" value="v9t9-gui"/>
+<stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="-Djava.library.path=${project_loc:v9t9-gui}/libs/lwjgl/native/windows;${project_loc:ejs-base}/"/>
 <stringAttribute key="yk-options" value="&#10;additional-options2=onexit\=snapshot&#10;startup=6&#10;"/>
 </launchConfiguration>

@@ -314,7 +314,7 @@ public class SwtLwjglKeyboardHandler extends SwtKeyboardHandler {
 			logger.warn("Failed to re-read " + controllerConfigRegistry.getName() + "; back up ~/.v9t9j/config before exiting", e);
 		}
 		
-		if (controllerSetup == null) {
+		if (!wasConfigured) {
 			controllerSetup = new ControllerSetup();
 			controllerSetup.controllerNames = currentConfig;
 		}

@@ -42,7 +42,7 @@ public class ControllerSetup {
 			return;
 		}
 		
-		String[] parts = str.split("\\|\\|");
+		String[] parts = str.split("\\|\\|", -1);
 		if (parts.length < 3) {
 			throw new ControllerConfig.ParseException(0, "expected at least three segments");
 		}
