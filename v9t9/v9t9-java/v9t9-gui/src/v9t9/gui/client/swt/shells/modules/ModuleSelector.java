@@ -515,6 +515,8 @@ public class ModuleSelector extends Composite {
 	}
 
 	protected void refreshFilters() {
+		if (viewer.getControl().isDisposed())
+			return;
 		viewer.setFilters(new ViewerFilter[] { 
 				existingModulesFilter,
 				filteredSearchFilter

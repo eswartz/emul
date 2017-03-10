@@ -102,9 +102,11 @@ public class PathFileLocator implements IPathFileLocator {
 			@Override
 			public void propertyChanged(IProperty property) {
 				synchronized (PathFileLocator.this) {
-					cachePaths();
-					for (IPathChangeListener listener : listeners) {
-						listener.pathsChanged();
+					if (!listeners.isEmpty()) {
+						cachePaths();
+						for (IPathChangeListener listener : listeners) {
+							listener.pathsChanged();
+						}
 					}
 				}
 			}
