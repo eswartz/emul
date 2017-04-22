@@ -207,6 +207,10 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 		}
 	}
 	
+	protected CanvasFormat updateCanvasFormat(CanvasFormat format) {
+		// all formats allowed
+		return format;
+	}
 
 	/**
 	 * @return

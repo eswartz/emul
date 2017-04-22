@@ -245,12 +245,21 @@ public class SwtVideoRenderer implements IVideoRenderer, ICanvasListener, ISwtVi
 		return SWT.NO_BACKGROUND;
 	}
 
+	protected CanvasFormat updateCanvasFormat(CanvasFormat format) {
+		if (format != CanvasFormat.RGB8 && format != CanvasFormat.RGB24) {
+			return CanvasFormat.RGB24;
+		}
+		return format;
+	}
+	
 	protected void createVdpCanvasHandler() {
 		
 		CanvasFormat format = (CanvasFormat) canvasFormat.getValue();
 		if (format == null || format == CanvasFormat.DEFAULT) {
 			format = getDefaultCanvasFormat();
 		}
+		
+		format = updateCanvasFormat(format);
 		
 		if (vdpCanvasRenderer != null) {
 			vdpCanvasRenderer.dispose();
@@ -380,7 +389,6 @@ public class SwtVideoRenderer implements IVideoRenderer, ICanvasListener, ISwtVi
 	 * 
 	 */
 	protected void doCleanRedraw() {
-		
 	}
 
 	protected void doTriggerRedraw() {
