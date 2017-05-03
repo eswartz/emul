@@ -10,7 +10,7 @@ Introduction
 <div class='lookyhere' style='width:33%'>
 <p>
 	<a href='images/v9t9-window.png'>
-	<img alt="V9t9 image" src="images/v9t9-window_th.png" width="232" height="157"></img>
+	<img alt="V9t9 image" src="images/v9t9-window_th.png" width="232" height="157"/>
 	</a>
 
 </p>
