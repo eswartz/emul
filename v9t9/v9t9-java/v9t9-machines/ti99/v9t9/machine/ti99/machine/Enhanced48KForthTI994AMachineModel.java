@@ -132,7 +132,7 @@ public class Enhanced48KForthTI994AMachineModel extends BaseTI99MachineModel {
 
 		machine.getCruManager().add(0x1402, 1, new ICruWriter() {
 
-			public int write(int addr, int data, int num) {
+			public void write(int addr, int data, int num) {
 				if (data == 1) {
 					vdpCpuBanked = true;
 					//currentMemory = machine.getMemory().map.lookupEntry(machine.getConsole(), 0xc000);
@@ -143,13 +143,12 @@ public class Enhanced48KForthTI994AMachineModel extends BaseTI99MachineModel {
 					//if (currentMemory != null)
 					//	currentMemory.map();
 				}
-				return 0;
 			}
 			
 		});
 		ICruWriter bankSelector = new ICruWriter() {
 
-			public int write(int addr, int data, int num) {
+			public void write(int addr, int data, int num) {
 				// independent banking from VDP
 				if (vdpCpuBanked) {
 					int currentBank = cpuBankedVideo.getCurrentBank();
@@ -157,7 +156,6 @@ public class Enhanced48KForthTI994AMachineModel extends BaseTI99MachineModel {
 					currentBank = (currentBank & ~(1 << bit)) | (data << bit);
 					cpuBankedVideo.selectBank(currentBank);
 				}
-				return 0;
 			}
 			
 		};

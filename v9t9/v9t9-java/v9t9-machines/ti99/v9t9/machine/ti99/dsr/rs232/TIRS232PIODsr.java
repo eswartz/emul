@@ -235,19 +235,18 @@ public class TIRS232PIODsr extends TIRS232Dsr {
 	}
 
 	private ICruWriter cruwPIO_1 = new ICruWriter() {
-		public int write(int addr, int data, int num) {
+		public void write(int addr, int data, int num) {
 			PIORegs regs = getPIODeviceForAddr(addr);
 			regs.reading = data != 0;
 			if (!regs.reading) {
 				// clear handshake
 				regs.handshakeout = true;
 			}
-			return 0;
 		}
 	};
 	
 	private ICruWriter cruwPIO_2 = new ICruWriter() {
-		public int write(int addr, int data, int num) {
+		public void write(int addr, int data, int num) {
 			PIORegs regs = getPIODeviceForAddr(addr);
 			regs.handshakeout = data != 0;
 			if (!regs.handshakeout) {
@@ -256,7 +255,6 @@ public class TIRS232PIODsr extends TIRS232Dsr {
 				regs.handshakein = true;
 				
 			}
-			return 0;
 		}
 	};
 	
@@ -280,10 +278,9 @@ public class TIRS232PIODsr extends TIRS232Dsr {
 	};
 	
 	private ICruWriter cruwPIO_3 = new ICruWriter() {
-		public int write(int addr, int data, int num) {
+		public void write(int addr, int data, int num) {
 			PIORegs regs = getPIODeviceForAddr(addr);
 			regs.spareout = data != 0;
-			return 0;
 		}
 	};
 	private ICruReader crurPIO_3 = new ICruReader() {
@@ -296,10 +293,9 @@ public class TIRS232PIODsr extends TIRS232Dsr {
 	
 
 	private ICruWriter cruwPIO_4 = new ICruWriter() {
-		public int write(int addr, int data, int num) {
+		public void write(int addr, int data, int num) {
 			PIORegs regs = getPIODeviceForAddr(addr);
 			regs.reflect = data != 0;
-			return 0;
 		}
 	};
 	private ICruReader crurPIO_4 = new ICruReader() {
@@ -312,9 +308,8 @@ public class TIRS232PIODsr extends TIRS232Dsr {
 	
 	/** CTS */
 	private ICruWriter cruwPIO_5_6 = new ICruWriter() {
-		public int write(int addr, int data, int num) {
+		public void write(int addr, int data, int num) {
 			//PIORegs regs = getPIODeviceForAddr(addr);
-			return 0;
 		}
 	};
 	/** CTS */
@@ -327,9 +322,8 @@ public class TIRS232PIODsr extends TIRS232Dsr {
 	};
 	
 	private ICruWriter cruwPIO_7 = new ICruWriter() {
-		public int write(int addr, int data, int num) {
+		public void write(int addr, int data, int num) {
 			pioActiveSetting.setBoolean(data != 0);
-			return 0;
 		}
 	};
 	

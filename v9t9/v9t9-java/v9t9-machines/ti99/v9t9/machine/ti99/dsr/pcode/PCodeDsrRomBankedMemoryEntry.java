@@ -44,9 +44,8 @@ public class PCodeDsrRomBankedMemoryEntry extends MultiBankedMemoryEntry {
 				new ICruWriter() {
 
 					@Override
-					public int write(int addr, int data, int num) {
+					public void write(int addr, int data, int num) {
 						selectBank(data & 1);
-						return 0;
 					}
 			
 		});
@@ -55,10 +54,9 @@ public class PCodeDsrRomBankedMemoryEntry extends MultiBankedMemoryEntry {
 				new ICruWriter() {
 
 					@Override
-					public int write(int addr, int data, int num) {
+					public void write(int addr, int data, int num) {
 						// blink light
 						System.out.println("*** PCODE blink " + (data == 0 ? "off" : "on"));
-						return 0;
 					}
 			
 		});

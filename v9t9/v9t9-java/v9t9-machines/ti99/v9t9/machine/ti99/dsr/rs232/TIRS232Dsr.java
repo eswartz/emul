@@ -144,7 +144,7 @@ public class TIRS232Dsr implements IDsrHandler9900, IDeviceSettings {
 	 *	Writes of low register bits
 	 */
 	private ICruWriter cruwRealRS232_0_10 = new ICruWriter() {
-		public int write(int addr, int data, int num) {
+		public void write(int addr, int data, int num) {
 			RS232Regs regs = getRS232DeviceForAddr(addr);
 			int bit = 1 << ((addr & 0x1f) >> 1);
 			
@@ -154,7 +154,6 @@ public class TIRS232Dsr implements IDsrHandler9900, IDeviceSettings {
 			regs.setReadPort(regs.getReadPort() & ~RS232Regs.RS_FLAG);
 			regs.updateWriteBits(data, bit);
 			regs.triggerChange(bit);
-			return 0;
 		}
 	};
 	
@@ -162,7 +161,7 @@ public class TIRS232Dsr implements IDsrHandler9900, IDeviceSettings {
 	 *	Load control register bits
 	 */
 	private ICruWriter cruwRealRS232_11_14 = new ICruWriter() {
-		public int write(int addr, int data, int num) {
+		public void write(int addr, int data, int num) {
 			RS232Regs regs = getRS232DeviceForAddr(addr);
 			int bit = 1 << (((addr & 0x1f) >> 1) - 11);
 			
@@ -174,7 +173,6 @@ public class TIRS232Dsr implements IDsrHandler9900, IDeviceSettings {
 			
 			regs.triggerChange(0);
 			
-			return 0;
 		}
 	};
 	
@@ -183,7 +181,7 @@ public class TIRS232Dsr implements IDsrHandler9900, IDeviceSettings {
 	 *
 	 */
 	private ICruWriter cruwRealRS232_16_21 = new ICruWriter() {
-		public int write(int addr, int data, int num) {
+		public void write(int addr, int data, int num) {
 			RS232Regs regs = getRS232DeviceForAddr(addr);
 			int bit = 1 << ((addr & 0x3f) >> 1);
 			
@@ -195,12 +193,11 @@ public class TIRS232Dsr implements IDsrHandler9900, IDeviceSettings {
 			
 			//rs.setControlBits(regs.getDataSize(), regs.getParity(), regs.getStop());
 			
-			return 0;
 		}
 	};
 	
 	private ICruWriter cruwRealRS232_Reset = new ICruWriter() {
-		public int write(int addr, int data, int num) {
+		public void write(int addr, int data, int num) {
 			RS232Regs regs = getRS232DeviceForAddr(addr);
 			
 			dumper.info(String.format("RealRS232_Reset_w: %d", data));
@@ -211,7 +208,6 @@ public class TIRS232Dsr implements IDsrHandler9900, IDeviceSettings {
 			
 			}
 			
-			return 0;
 		}
 	};
 	

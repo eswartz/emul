@@ -82,7 +82,7 @@ public class DsrManager implements IPersistable, IDsrManager {
 	protected void addDeviceCRU(int addr, final IDsrHandler9900 dsr) {
 		((TI99Machine)machine).getCruManager().add(addr, 1, new ICruWriter() {
 
-			public int write(int addr, int data, int num) {
+			public void write(int addr, int data, int num) {
 				if (data == 1) {
 					try {
 						dsr.activate(machine.getConsole(), machine.getMemory().getMemoryEntryFactory());
@@ -96,7 +96,6 @@ public class DsrManager implements IPersistable, IDsrManager {
 					dsr.deactivate(machine.getConsole());
 					activeDsr = null;
 				}
-				return 0;
 			}
 			
 		});

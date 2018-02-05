@@ -41,12 +41,11 @@ public class InternalCru9901 extends BaseCruChip {
 
 	private ICruWriter cruw9901_0 = new ICruWriter() {
 
-		public int write(int addr, int data, int num) {
+		public void write(int addr, int data, int num) {
 			clockmode = (data != 0);
 			if (clockmode) {
 				clockReadRegister = clockDecrementerRegister;
 			}
-			return 0;
 		}
 		
 	};
@@ -56,7 +55,7 @@ public class InternalCru9901 extends BaseCruChip {
 	*/
 	private ICruWriter cruw9901_S = new ICruWriter() {
 
-		public int write(int addr, int data, int num) {
+		public void write(int addr, int data, int num) {
 			int         bit = addr / 2;
 		
 			if (clockmode) {
@@ -78,92 +77,82 @@ public class InternalCru9901 extends BaseCruChip {
 					enabledIntMask |= mask;
 				}
 			}
-			return 0;
 		}
 	};
 	
 	private ICruWriter cruw9901_reset = new ICruWriter() {
 		
-		public int write(int addr, int data, int num) {
+		public void write(int addr, int data, int num) {
 			if (clockmode) {
 				reset();
 			}
-			return 0;
 		}
 		
 	};
 	private ICruWriter cruwkeyboard_2 = new ICruWriter() {
 
-		public int write(int addr, int data, int num) {
+		public void write(int addr, int data, int num) {
 			crukeyboardcol = (crukeyboardcol & 3) | (data << 2);
 			checkKeyscanPattern(KeyscanStage.WRITE_COLUMN_HI);
-			return 0;
 		}
 		
 	};
 
 	private ICruWriter cruwkeyboard_1 = new ICruWriter() {
 
-		public int write(int addr, int data, int num) {
+		public void write(int addr, int data, int num) {
 			crukeyboardcol = (crukeyboardcol & 5) | (data << 1);
-			return 0;
 		}
 		
 	};
 
 	private ICruWriter cruwkeyboard_0 = new ICruWriter() {
 
-		public int write(int addr, int data, int num) {
+		public void write(int addr, int data, int num) {
 			crukeyboardcol = (crukeyboardcol & 6) | (data);
 			
-			return 0;
 		}
 		
 	};
 
 	private ICruWriter cruwAlpha = new ICruWriter() {
 
-		public int write(int addr, int data, int num) {
+		public void write(int addr, int data, int num) {
 			if (data != 0) {
 				// first CRU bit set in TI ROM keyboard scanning routine, good place to paste
 				checkKeyscanPattern(KeyscanStage.WRITE_ALPHA);
 			}
 			alphaLockMask = data != 0;
-			return 0;
 		}
 		
 	};
 	private ICruWriter cruwAudioGate = new ICruWriter() {
 		
-		public int write(int addr, int data, int num) {
+		public void write(int addr, int data, int num) {
 			getMachine().getSound().setAudioGate(addr, data != 0);
-			return 0;
 		}
 		
 	};
 
 	private ICruWriter cruwCassette1 = new ICruWriter() {
-		public int write(int addr, int data, int num) {
+		public void write(int addr, int data, int num) {
 			getMachine().getCassette().getCassette1().setMotor(data != 0);
 			//System.out.println(System.currentTimeMillis() + ": [CS1] " + (data != 0 ? "on" : "off"));
-			return 0;
 		}
 		
 	};
 	
 	private ICruWriter cruwCassette2 = new ICruWriter() {
-		public int write(int addr, int data, int num) {
+		public void write(int addr, int data, int num) {
 			getMachine().getCassette().getCassette2().setMotor(data != 0);
 			//System.out.println(System.currentTimeMillis() + ": [CS2] " + (data != 0 ? "on" : "off"));
-			return 0;
 		}
 		
 	};
 	
 	private ICruWriter cruwCassetteOut = new ICruWriter() {
-		public int write(int addr, int data, int num) {
+		public void write(int addr, int data, int num) {
 			getMachine().getCassette().getCassette1().writeBit(data != 0);
-			return 0;
 		}
 		
 	};
@@ -275,6 +264,29 @@ public class InternalCru9901 extends BaseCruChip {
 		}
 		
 	};
+	
+	/**
+	 * No idea what these bits are... they are queried in 99/4 ROM
+	 * and marked "Reserved" in the E/A manual
+	 *
+	 */
+	private class Cru20_22 implements ICruWriter, ICruReader {
+		private boolean last = false;
+		public void write(int addr, int data, int num) {
+			if (addr == 0x20) {
+				last = data != 0;
+			}
+		}
+		
+		public int read(int addr, int data, int num) {
+			int ret = !last ? 0 : 1;
+			last = !last;
+			return ret;
+		}
+		
+	};
+	
+	private Cru20_22 cru9901_20_22 = new Cru20_22();
 
 	private List<KeyscanStage> knownKeyscanPattern = new LinkedList<KeyscanStage>();
 	private List<KeyscanStage> keyscanPattern = new LinkedList<KeyscanStage>();
@@ -308,6 +320,8 @@ public class InternalCru9901 extends BaseCruChip {
         registerInternalCru(0x1c, 1, cruw9901_S);
         registerInternalCru(0x1e, 1, cruw9901_reset);
         
+        registerInternalCru(0x1e, 1, (ICruWriter) cru9901_20_22); // TI-99/4
+        
         registerInternalCru(0x24, 1, cruwkeyboard_0);
         registerInternalCru(0x26, 1, cruwkeyboard_1);
         registerInternalCru(0x28, 1, cruwkeyboard_2);
@@ -334,6 +348,9 @@ public class InternalCru9901 extends BaseCruChip {
         registerInternalCru(0x1A, 1, crur9901_KS);
         registerInternalCru(0x1C, 1, crur9901_KS);
         registerInternalCru(0x1e, 1, crur9901_15);
+        
+        registerInternalCru(0x22, 1, (ICruReader) cru9901_20_22);  // TI-99/4 
+
         registerInternalCru(0x2a, 1, cruralpha);
 
         registerInternalCru(0x36, 1, crurCassetteIn);

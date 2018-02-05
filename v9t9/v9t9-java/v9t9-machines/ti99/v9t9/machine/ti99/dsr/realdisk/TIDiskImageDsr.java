@@ -85,10 +85,9 @@ public class TIDiskImageDsr extends BaseDiskImageDsr implements IDsrHandler9900 
 	;
 	
 	private ICruWriter cruwRealDiskMotor = new ICruWriter() {
-		public int write(int addr, int data, int num) {
+		public void write(int addr, int data, int num) {
 			//module_logger(&realDiskDSR, _L|L_1, _("CRU Motor %s\n"), data ? "on" : "off");
 			fdc.setDiskMotor(data != 0);
-			return 0;
 		}
 	};
 
@@ -96,39 +95,35 @@ public class TIDiskImageDsr extends BaseDiskImageDsr implements IDsrHandler9900 
 	private DiskMMIOMemoryArea ioArea;	
 	
 	private ICruWriter cruwRealDiskHold = new ICruWriter() {
-		public int write(int addr, int data, int num) {
+		public void write(int addr, int data, int num) {
 			//module_logger(&realDiskDSR, _L|L_1, _("CRU hold %s\n"), data ? "on" : "off");
 		
 			fdc.setHold(data != 0);
 			
-			return 0;
 		}
 	};
 
 	private ICruWriter cruwRealDiskHeads = new ICruWriter() {
-		public int write(int addr, int data, int num) {
+		public void write(int addr, int data, int num) {
 			//module_logger(&realDiskDSR, _L|L_1, _("CRU Heads %s\n"), data ? "on" : "off");
 	
 			fdc.setHeads(data != 0);
-			return 0;
 		}
 	};
 	
 	private ICruWriter cruwRealDiskSel = new ICruWriter() {
-		public int write(int addr, int data, int num) {
+		public void write(int addr, int data, int num) {
 			byte newnum = (byte) (((addr - base - 8) >> 1) + 1);
 	
 			fdc.selectDisk(newnum, data != 0);
 			
-			return 0;
 		}
 	};
 	
 	private ICruWriter cruwRealDiskSide = new ICruWriter() {
-		public int write(int addr, int data, int num) {
+		public void write(int addr, int data, int num) {
 			//module_logger(&realDiskDSR, _L|L_1, _("CRU disk side #%d\n"), data);
 			setDiskSide(data);
-			return 0;
 		}
 	};
 	

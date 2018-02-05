@@ -32,11 +32,10 @@ public class MultiCruWriter implements ICruWriter {
 	 * @see v9t9.engine.hardware.ICruWriter#write(int, int, int)
 	 */
 	@Override
-	public int write(int addr, int data, int num) {
+	public void write(int addr, int data, int num) {
 		for (ICruWriter writer : writers) {
 			writer.write(addr, data, num);
 		}
-		return 0;
 	}
 	/**
 	 * 

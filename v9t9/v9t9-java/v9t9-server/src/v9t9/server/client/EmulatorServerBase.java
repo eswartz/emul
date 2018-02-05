@@ -46,6 +46,7 @@ import v9t9.machine.ti99.machine.EnhancedTI994AMachineModel;
 import v9t9.machine.ti99.machine.Forth9900MachineModel;
 import v9t9.machine.ti99.machine.Forth9900StandaloneMachineModel;
 import v9t9.machine.ti99.machine.StandardTI994AMachineModel;
+import v9t9.machine.ti99.machine.StandardTI994MachineModel;
 import v9t9.server.MachineModelFactory;
 import v9t9.server.settings.SettingsHandler;
 import v9t9.server.settings.WorkspaceSettings;
@@ -69,6 +70,8 @@ public abstract class EmulatorServerBase {
 		
 		MachineModelFactory.INSTANCE.register(
 				StandardTI994AMachineModel.ID, StandardTI994AMachineModel.class);
+		MachineModelFactory.INSTANCE.register(
+				StandardTI994MachineModel.ID, StandardTI994MachineModel.class);
 		MachineModelFactory.INSTANCE.register(
 				EnhancedTI994AMachineModel.ID, EnhancedTI994AMachineModel.class);
 		MachineModelFactory.INSTANCE.register(
