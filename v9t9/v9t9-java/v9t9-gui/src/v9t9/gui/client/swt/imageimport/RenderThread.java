@@ -47,7 +47,7 @@ public class RenderThread extends Thread {
 	 */
 	@Override
 	public void run() {
-		if (datas.length == 0)
+		if (datas == null || datas.length == 0)
 			return;
 		while (!cancelled) {
 			long now = System.currentTimeMillis();
