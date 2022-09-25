@@ -33,7 +33,7 @@ public class DiskImageEntry extends BaseDiskEntry {
 		Catalog catalog;
 		
 		IEmulatedDisk disk;
-		disk = fileHandler.getDiskImageMapper().createDiskImage(new File(setting.getString()));
+		disk = fileHandler.getDiskImageMapper().createDiskImage(new File(setting.getString()), "DSK" + setting.getName().charAt(setting.getName().length() - 1));
 		catalog = disk.readCatalog();
 		return catalog;
 	}

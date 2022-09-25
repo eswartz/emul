@@ -74,10 +74,11 @@ public interface IDiskImageMapper extends IPersistable {
 	/**
 	 * Try to create a disk image from the given file
 	 * @param file
+	 * @param name TODO
 	 * @return image
 	 * @throws IOException if not a recognized disk image
 	 */
-	IDiskImage createDiskImage(File file) throws IOException;
+	IDiskImage createDiskImage(File file, String name) throws IOException;
 	
 	/**
 	 * Get the property that controls whether disk image support is enabled

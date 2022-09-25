@@ -11,13 +11,17 @@
 package v9t9.gui.client.swt.shells.disk;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.nio.file.FileSystemNotFoundException;
 
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.DirectoryDialog;
 
+import v9t9.common.dsr.IDsrHandler;
+import v9t9.common.dsr.IDsrManager;
 import v9t9.common.files.Catalog;
 import v9t9.common.files.IEmulatedDisk;
 import v9t9.common.files.IEmulatedFileHandler;
@@ -38,6 +42,9 @@ public class DiskDirectoryEntry extends BaseDiskEntry {
 		
 		IEmulatedDisk disk;
 		disk = fileHandler.getFilesInDirectoryMapper().createDiskDirectory(new File(setting.getString()));
+		if (!disk.isFormatted()) {
+			throw new FileSystemNotFoundException(setting.getString());
+		}
 		catalog = disk.readCatalog();
 		return catalog;
 	}

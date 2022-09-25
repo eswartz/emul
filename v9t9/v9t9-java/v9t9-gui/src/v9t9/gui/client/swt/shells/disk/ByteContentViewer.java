@@ -38,22 +38,20 @@ import v9t9.common.files.IEmulatedFile;
 public class ByteContentViewer extends Composite {
 
 	final int WIDTH = 16;
+	
 	public static class ByteRow {
+		private int address;
+		private byte[] content;
+		
 		public ByteRow(int address, int length) {
 			this.address = address;
 			this.content = new byte[length];
 		}
-		int address;
-		byte[] content;
-		/**
-		 * @return
-		 */
+
 		public int getAddress() {
 			return address;
 		}
-		/**
-		 * @return the content
-		 */
+		
 		public byte[] getContent() {
 			return content;
 		}
@@ -63,9 +61,8 @@ public class ByteContentViewer extends Composite {
 		}
 		public final char getChar(int column) {
 			int b = getByte(column) & 0xff;
-			return b > 32 && b < 127 ? (char)b : '.';
+			return b >= 32 && b < 127 ? (char)b : '.';
 		}
-
 	}
 	
 	private StackLayout tableLayout;

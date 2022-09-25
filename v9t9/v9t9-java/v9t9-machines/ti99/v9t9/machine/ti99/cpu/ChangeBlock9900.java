@@ -12,6 +12,7 @@ package v9t9.machine.ti99.cpu;
 
 import v9t9.common.asm.IMachineOperand;
 import v9t9.common.asm.IOperand;
+import v9t9.common.asm.InstInfo;
 import v9t9.common.asm.InstTableCommon;
 import v9t9.common.cpu.ChangeBlock;
 import v9t9.common.cpu.CycleCounts;

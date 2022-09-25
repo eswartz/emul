@@ -22,6 +22,7 @@ import v9t9.common.dsr.IDeviceSettings;
 import v9t9.common.hardware.ISoundChip;
 import v9t9.common.hardware.ISpeechChip;
 import v9t9.common.hardware.IVdpChip;
+import v9t9.common.keyboard.IKeyboardState;
 import v9t9.common.keyboard.KeyboardConstants;
 import v9t9.common.machine.IMachine;
 import v9t9.common.machine.IMachineModel;
@@ -37,6 +38,7 @@ import v9t9.machine.EmulatorMachinesData;
 import v9t9.machine.f99b.cpu.CpuF99b;
 import v9t9.machine.f99b.memory.F99bMemoryModel;
 import v9t9.machine.ti99.machine.InternalCruF99;
+import v9t9.machine.ti99.machine.KeyboardState994A;
 
 /**
  * This is a machine model for F99b
@@ -221,6 +223,12 @@ public class F99bMachineModel implements IMachineModel {
 	public IModuleManager createModuleManager(IMachine machine) {
 		return null;
 	}
+	
+	@Override
+	public IKeyboardState createKeyboardState(IMachine machine) {
+		return new KeyboardState994A(machine);
+	}
+	
 	/* (non-Javadoc)
 	 * @see v9t9.common.machine.IMachineModel#getDataURL()
 	 */

@@ -216,7 +216,7 @@ abstract public class MachineBase implements IMachine {
     	moduleManager = machineModel.createModuleManager(this);
     	
     	cpu = machineModel.createCPU(this); 
-		keyboardState = new KeyboardState(this);
+		keyboardState = machineModel.createKeyboardState(this);
 		
 		keyboardHandler = new NullKeyboardHandler(keyboardState, this);
 

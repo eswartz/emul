@@ -37,7 +37,7 @@ public interface IEmulatedFile extends IFDRInfo, IEmulatedStorage {
 	/** Write file contents, excluding headers */
 	int writeContents(byte[] contents, int contentOffset, int offset, int length)
 			throws IOException;
-
+	
 	/**
 	 * Set absolute file length
 	 * @param size

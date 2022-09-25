@@ -119,7 +119,7 @@ public class Type extends BaseDiskUtil {
 	}
 
 	private void dumpContent(IEmulatedFile file) throws IOException {
-		OpenFile of = new OpenFile(file, "DSK1", file.getFileName());
+		OpenFile of = new OpenFile(file, file.getFileName());
 		try {
 			if (file instanceof NativeTextFile || of.isProgram()) {
 				// dump whole thing

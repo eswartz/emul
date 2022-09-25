@@ -44,7 +44,7 @@ public class BaseDiskUtil {
 		if (target.isDirectory())
 			image = handler.getFilesInDirectoryMapper().createDiskDirectory(target);
 		else
-			image = handler.getDiskImageMapper().createDiskImage(target);
+			image = handler.getDiskImageMapper().createDiskImage(target, "DSK");
 		if (!image.isFormatted())
 			throw new IOException("disk image not formatted: " + path);
 		return image;

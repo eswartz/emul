@@ -37,19 +37,20 @@ public class KeyboardState implements IKeyboardState {
 	public static boolean DEBUG = false;
 	
 	 /* CRU rows and columns */
-    static final byte SHIFT_R = 2;
-    static final byte SHIFT_C = 0;
-    static final byte FCTN_R = 3;
-    static final byte FCTN_C = 0;
-    static final byte CTRL_R = 1;
-    static final byte CTRL_C = 0;
-    static final byte JOY1_C = 6;
+    protected byte SHIFT_R;
+    protected byte SHIFT_C;
+    protected byte FCTN_R;
+    protected byte FCTN_C;
+    protected byte CTRL_R;
+    protected byte CTRL_C;
+    protected byte JOY1_C;
+    protected byte JOY2_C;
 
-    static final int JOY_FIRE_R = 7;
-	static final int JOY_LEFT_R = 6;
-	static final int JOY_RIGHT_R = 5;
-	static final int JOY_DOWN_R = 4;
-	static final int JOY_UP_R = 3;
+    protected int JOY_FIRE_R;
+    protected int JOY_LEFT_R;
+    protected int JOY_RIGHT_R;
+    protected int JOY_DOWN_R;
+    protected int JOY_UP_R;
 
     /** 'real' shift keys being held down, as opposed to those being synthesized */
     private byte realshift;
@@ -71,48 +72,9 @@ public class KeyboardState implements IKeyboardState {
     /*  Map of ASCII codes and their direct CRU mapping
         (high nybble=row, low nybble=column), except for 0xff,
         which should be faked. */
-
-    /*  NOTE: 47 = '/' in Latin-1 corresponds to the US keyboard key '/'
-        and '?', but on the TI keyboard, 0x75 this is the key for '/' and
-        '-'.  The target-specific code must trap '-', '/', '?', '_'
-        and should use FCTN+I for '?'.*/
-    static final byte latinto9901[] = new byte[] {
-        0x20, 0x10, 0x30,   -1,   -1,   -1,   -1,   -1, /* 0-7 */
-          -1,   -1,   -1,   -1,   -1, 0x50,   -1,   -1, /* 8-15 */
-          -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1, /* 16-23 */
-          -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1, /* 24-31 */
+    protected byte latinto9901[] = new byte[128];
     
-        0x60,   -1,   -1,   -1,   -1,   -1,   -1,   -1, /* 32-39 */
-          -1,   -1,   -1,   -1, 0x72,   -1, 0x71, 0x75, /* 40-47 */
-        0x45, 0x35, 0x31, 0x32, 0x33, 0x34, 0x44, 0x43, /* 48-55 */
-        0x42, 0x41,   -1, 0x65,   -1, 0x70,   -1,   -1, /* 56-63 */
     
-          -1, 0x25, 0x04, 0x02, 0x22, 0x12, 0x23, 0x24, /* 64-71 */
-        0x64, 0x52, 0x63, 0x62, 0x61, 0x73, 0x74, 0x51, /* 72-79 */
-        0x55, 0x15, 0x13, 0x21, 0x14, 0x53, 0x03, 0x11, /* 80-87 */
-        0x01, 0x54, 0x05,   -1,   -1,   -1,   -1,   -1, /* 88-95 */
-    
-          -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1, /* 96-103 */
-          -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1, /* 104-111 */
-          -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1, /* 112-119 */
-          -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1  /* 120-127 */
-    };
-    
-    /** entries as 0x[row:4][column:4] */
-    static final char x9901ToLatin[] = {
-    	/* 0x00 */   0, 'X', 'C', 'V', 'B', 'Z', 0, 0,
-    	/* 0x10 */   0, 'W', 'E', 'R', 'T', 'Q', 0, 0,
-    	/* 0x20 */   0, 'S', 'D', 'F', 'G', 'A', 0, 0,
-    	/* 0x30 */   0, '2', '3', '4', '5', '1', 0, 0,
-    	/* 0x40 */   0, '9', '8', '7', '6', '0', 0, 0,
-    	/* 0x50 */  13, 'O', 'I', 'U', 'Y', 'P', 0, 0,
-    	/* 0x60 */ ' ', 'L', 'K', 'J', 'H', ';', 0, 0,
-    	/* 0x70 */ '=', '.', ',', 'M', 'N', '/', 0, 0,
-    	
-    };
-	//private final Cpu cpu;
-	//private long lastAbortTime;
-
     /*	This macro tells us whether an ASCII code has a direct mapping
 	to a 9901 keyboard matrix location (stored in latinto9901[]).
 	The '/' character is special, since its 99/4A shifted value ('-') is not
@@ -237,93 +199,10 @@ public class KeyboardState implements IKeyboardState {
 	public void registerMapping(int vkey, int... keys) {
 		for (int k : keys) {
 			if (latinto9901[k] == -1)
-				throw new IllegalStateException();
+				//throw new IllegalStateException();
+				return;
 		}
 		vkeyToKeyMappings.put(vkey, keys);
-	}
-		
-	{
-		registerMapping(KEY_TAB, KEY_CONTROL, 'I');
-		registerMapping(KEY_EXCLAMATION, KEY_SHIFT, '1');
-		registerMapping(KEY_AT, KEY_SHIFT, '2');
-		registerMapping(KEY_POUND, KEY_SHIFT, '3');
-		registerMapping(KEY_DOLLAR, KEY_SHIFT, '4');
-		registerMapping(KEY_PERCENT, KEY_SHIFT, '5');
-		registerMapping(KEY_CIRCUMFLEX, KEY_SHIFT, '6');
-		registerMapping(KEY_AMPERSAND, KEY_SHIFT, '7');
-		registerMapping(KEY_ASTERISK, KEY_SHIFT, '8');
-		registerMapping(KEY_OPEN_PARENTHESIS, KEY_SHIFT, '9');
-		registerMapping(KEY_CLOSE_PARENTHESIS, KEY_SHIFT, '0');
-		registerMapping(KEY_PLUS, KEY_SHIFT, '=');
-		registerMapping(KEY_LESS, KEY_SHIFT, ',');
-		registerMapping(KEY_GREATER, KEY_SHIFT, '.');
-		registerMapping(KEY_COLON, KEY_SHIFT, ';');
-		registerMapping(KEY_BACK_QUOTE, KEY_ALT, 'C');
-		registerMapping(KEY_TILDE, KEY_ALT, 'W');
-		registerMapping(KEY_MINUS, KEY_SHIFT, '/');
-		registerMapping(KEY_UNDERSCORE, KEY_ALT, 'U');
-		registerMapping(KEY_OPEN_BRACKET, KEY_ALT, 'R');
-		registerMapping(KEY_OPEN_BRACE, KEY_ALT, 'F');
-		registerMapping(KEY_CLOSE_BRACKET, KEY_ALT, 'T');
-		registerMapping(KEY_CLOSE_BRACE, KEY_ALT, 'G');
-		registerMapping(KEY_QUOTE, KEY_ALT, 'P');
-		registerMapping(KEY_SINGLE_QUOTE, KEY_ALT, 'O');
-		registerMapping(KEY_QUESTION, KEY_ALT, 'I');
-		registerMapping(KEY_BACK_SLASH, KEY_ALT, 'Z');
-		registerMapping(KEY_BAR, KEY_ALT, 'A');
-		registerMapping(KEY_DELETE, KEY_ALT, '1');
-		registerMapping(KEY_F1, KEY_ALT, '1');
-		registerMapping(KEY_F2, KEY_ALT, '2');
-		registerMapping(KEY_F3, KEY_ALT, '3');
-		registerMapping(KEY_F4, KEY_ALT, '4');
-		registerMapping(KEY_F5, KEY_ALT, '5');
-		registerMapping(KEY_F6, KEY_ALT, '6');
-		registerMapping(KEY_F7, KEY_ALT, '7');
-		registerMapping(KEY_F8, KEY_ALT, '8');
-		registerMapping(KEY_F9, KEY_ALT, '9');
-		
-		registerMapping(KEY_ARROW_DOWN, KEY_ALT, 'X');
-		registerMapping(KEY_ARROW_UP, KEY_ALT, 'E');
-		registerMapping(KEY_ARROW_LEFT, KEY_ALT, 'S');
-		registerMapping(KEY_ARROW_RIGHT, KEY_ALT, 'D');
-
-		registerMapping(KEY_PAGE_UP, KEY_ALT, '6');	// CLEAR  // (as per E/A and TI Writer)
-		registerMapping(KEY_PAGE_DOWN, KEY_ALT, '4');	// PROC'D  // (as per E/A and TI Writer)
-		registerMapping(KEY_HOME, KEY_ALT, '5');	// BEGIN
-		registerMapping(KEY_END, KEY_ALT, '0');	
-		registerMapping(KEY_INSERT, KEY_ALT, '2');	// INS	
-		registerMapping(KEY_DELETE, KEY_ALT, '1');	// DEL
-		
-		registerMapping(KEY_KP_ARROW_DOWN, KEY_ALT, 'X');
-		registerMapping(KEY_KP_ARROW_UP, KEY_ALT, 'E');
-		registerMapping(KEY_KP_ARROW_LEFT, KEY_ALT, 'S');
-		registerMapping(KEY_KP_ARROW_RIGHT, KEY_ALT, 'D');
-
-		registerMapping(KEY_KP_PAGE_UP, KEY_ALT, '6');	// CLEAR  // (as per E/A and TI Writer)
-		registerMapping(KEY_KP_PAGE_DOWN, KEY_ALT, '4');	// PROC'D  // (as per E/A and TI Writer)
-		registerMapping(KEY_KP_HOME, KEY_ALT, '5');	// BEGIN
-		registerMapping(KEY_KP_END, KEY_ALT, '0');	
-		registerMapping(KEY_KP_INSERT, KEY_ALT, '2');	// INS	
-		registerMapping(KEY_KP_DELETE, KEY_ALT, '1');	// DEL
-		
-		
-		registerMapping(KEY_KP_SLASH, '/');
-		registerMapping(KEY_KP_ASTERISK, KEY_SHIFT, '8');
-		registerMapping(KEY_KP_MINUS,  KEY_SHIFT, '/');
-		registerMapping(KEY_KP_PLUS, KEY_SHIFT, '=');
-		registerMapping(KEY_KP_ENTER, '\r');
-		registerMapping(KEY_KP_0, '0');
-		registerMapping(KEY_KP_1, '1');
-		registerMapping(KEY_KP_2, '2');
-		registerMapping(KEY_KP_3, '3');
-		registerMapping(KEY_KP_4, '4');
-		registerMapping(KEY_KP_5, '5');
-		registerMapping(KEY_KP_6, '6');
-		registerMapping(KEY_KP_7, '7');
-		registerMapping(KEY_KP_8, '8');
-		registerMapping(KEY_KP_9, '9');
-		
-		registerMapping(KEY_KP_SHIFT_5);
 	}
 		
 	/* (non-Javadoc)
@@ -470,6 +349,9 @@ public class KeyboardState implements IKeyboardState {
 	
  
     private boolean testKbdMatrix(byte r, byte c) {
+    	if ((r | c) < 0) {
+    		return false;
+    	}
         return (crukeyboardmap[c] & (0x80 >> r)) != 0;
     }
 
@@ -509,7 +391,7 @@ public class KeyboardState implements IKeyboardState {
 		// do joystick immediately
 		//System.out.println("joy:"+j+","+row+"="+v);
 		byte mask = (byte) (0x80 >> row);
-		byte c = (byte) (JOY1_C+(joy)-1);
+		byte c = joy == 1 ? JOY1_C : JOY2_C;
 		if (v) {
 			crukeyboardmap[c] |= mask;
 			lastcrukeyboardmap[c] |= mask;
@@ -523,7 +405,7 @@ public class KeyboardState implements IKeyboardState {
 
 	public boolean testJoyMatrix(int joy,int row) {
 		byte mask = (byte) (0x80 >> row);
-		byte c = (byte) (JOY1_C+(joy)-1);
+		byte c = joy == 0 ? JOY1_C : JOY2_C;
 		return (crukeyboardmap[c] & mask) != 0;
 	}
 
@@ -532,8 +414,11 @@ public class KeyboardState implements IKeyboardState {
 	 */
     @Override
 	public synchronized void setJoystick(final int joy, int mask, int x, int y, boolean fire) {
-    	int joyRow = JOY1_C+joy-1;
-		byte oldValue = crukeyboardmap[joyRow];
+    	byte c = joy == 0 ? JOY1_C : JOY2_C;
+    	if (c < 0) {
+    		return;
+    	}
+		byte oldValue = crukeyboardmap[c];
     	
     	if ((mask & JOY_X) != 0) {
     		//logger(_L | L_1, _("changing JOY_X (%d)\n\n"), x);
@@ -555,7 +440,7 @@ public class KeyboardState implements IKeyboardState {
     	changeJoyMatrix(joy, 1, false);
     	changeJoyMatrix(joy, 2, false);
     	
-    	final byte newValue = crukeyboardmap[joyRow];
+    	final byte newValue = crukeyboardmap[c];
     	
     	fireListeners();
     	

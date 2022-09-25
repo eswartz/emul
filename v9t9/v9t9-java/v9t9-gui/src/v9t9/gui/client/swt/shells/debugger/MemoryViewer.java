@@ -224,6 +224,11 @@ public class MemoryViewer extends Composite implements IPersistable, ICpuTracker
 					filterButton.setSelection(filterMemory);
 					decodeButton.setSelection(decodeMemory);
 
+					if (decodeMemory) {
+						tableLayout.topControl = decodedTableViewer.getControl();
+					} else {
+						tableLayout.topControl = byteTableViewer.getControl();
+					}
 					// apply filter
 					entryViewer.refresh();
 

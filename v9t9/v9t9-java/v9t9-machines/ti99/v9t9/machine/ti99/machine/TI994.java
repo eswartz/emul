@@ -21,10 +21,10 @@ import v9t9.common.memory.IMemoryWriteListener;
 
 public class TI994 extends TI99Machine {
 	private static String[] keyboardModeArray = {
+			KEYBOARD_MODE_TI994,
 			KEYBOARD_MODE_LEFT,
 			KEYBOARD_MODE_RIGHT,
 			KEYBOARD_MODE_PASCAL,
-			KEYBOARD_MODE_TI994,
 	};
 	protected byte currentMode;
 	private IMemoryWriteListener keyboardModeListener;

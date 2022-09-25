@@ -645,8 +645,6 @@ public class SpeechTMS5220 implements ISpeechChip {
 			boolean last = currentParams.isLast() || (userFetcher != null && userFetcher.isDone());
 			
 			lpc.frame(currentParams, getSamplesPerFrame());
-			
-//			boolean last = !lpc.frame(getDataFetcher(), getSamplesPerFrame());
 
 			if (last) {
 				SpeechDone();

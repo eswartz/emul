@@ -21,6 +21,7 @@ import v9t9.common.dsr.IDeviceSettings;
 import v9t9.common.hardware.ISoundChip;
 import v9t9.common.hardware.ISpeechChip;
 import v9t9.common.hardware.IVdpChip;
+import v9t9.common.keyboard.IKeyboardState;
 import v9t9.common.memory.IMemoryModel;
 import v9t9.common.modules.IModuleManager;
 import v9t9.common.machine.IMachine;
@@ -58,6 +59,7 @@ public interface IMachineModel {
 
 	IModuleManager createModuleManager(IMachine machine);
 
+	IKeyboardState createKeyboardState(IMachine machine);
 	
 	/**
 	 * Get the base data URL for this machine

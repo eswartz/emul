@@ -220,6 +220,11 @@ public class ConvertImages {
 	stockPalettes.put("cube322m", new CubePaletteMaker(16, 3, 2, 2, false).getPalette());
 	stockPalettes.put("cube422m", new CubePaletteMaker(16, 4, 2, 2, false).getPalette());
 	
+	stockPalettes.put("rgb685", makeRGB685Palette());
+	stockPalettes.put("rgb775", makeRGB775Palette());
+	stockPalettes.put("rgb676", makeRGB676Palette());
+	stockPalettes.put("rgb794", makeRGB794Palette());
+	
 	} // static
 	
 	
@@ -286,6 +291,110 @@ public class ConvertImages {
 						+ "-P: write and display the palette\n"
 						+ ""
 					);
+	}
+
+	private static byte[][] makeRGB685Palette() {
+		// 6*8*5 = 240
+		byte[][] rgbs = new byte[256][];
+		for (int grb = 0; grb < 256; grb++) {
+			byte[] rgb = new byte[3];
+			
+			int g,r,b;
+			int grbi = grb & 0xff;
+			if (grbi >= 240) {
+				g = r = b = (grbi - 239) * 255 / 16;
+			} else {
+				b = (grbi % 5) * 255 / 4;
+				grbi /= 5;
+				r = (grbi % 6) * 255 / 5;
+				grbi /= 6;
+				g = (grbi % 8) * 255 / 7;
+			}
+			rgb[0] = (byte) r;
+			rgb[1] = (byte) g;
+			rgb[2] = (byte) b;
+			
+			rgbs[grb]  = rgb;
+		}
+		return rgbs;
+	}
+	
+	private static byte[][] makeRGB775Palette() {
+		// 7*7*5 = 245
+		byte[][] rgbs = new byte[256][];
+		for (int grb = 0; grb < 256; grb++) {
+			byte[] rgb = new byte[3];
+			
+			int g,r,b;
+			int grbi = grb & 0xff;
+			if (grbi >= 245) {
+				g = r = b = (grbi - 244) * 255 / 10;
+			} else {
+				b = (grbi % 5) * 255 / 4;
+				grbi /= 5;
+				r = (grbi % 7) * 255 / 6;
+				grbi /= 7;
+				g = (grbi % 7) * 255 / 6;
+			}
+			rgb[0] = (byte) r;
+			rgb[1] = (byte) g;
+			rgb[2] = (byte) b;
+			
+			rgbs[grb]  = rgb;
+		}
+		return rgbs;
+	}
+
+	private static byte[][] makeRGB676Palette() {
+		// 6*7*6 = 252
+		byte[][] rgbs = new byte[256][];
+		for (int grb = 0; grb < 256; grb++) {
+			byte[] rgb = new byte[3];
+			
+			int g,r,b;
+			int grbi = grb & 0xff;
+			if (grbi >= 252) {
+				g = r = b = (grbi - 251) * 255 / 4;
+			} else {
+				b = (grbi % 6) * 255 / 5;
+				grbi /= 6;
+				r = (grbi % 6) * 255 / 5;
+				grbi /= 6;
+				g = (grbi % 7) * 255 / 6;
+			}
+			rgb[0] = (byte) r;
+			rgb[1] = (byte) g;
+			rgb[2] = (byte) b;
+			
+			rgbs[grb]  = rgb;
+		}
+		return rgbs;
+	}
+
+	private static byte[][] makeRGB794Palette() {
+		// 7*9*4 = 252
+		byte[][] rgbs = new byte[256][];
+		for (int grb = 0; grb < 256; grb++) {
+			byte[] rgb = new byte[3];
+			
+			int g,r,b;
+			int grbi = grb & 0xff;
+			if (grbi >= 252) {
+				g = r = b = (grbi - 251) * 255 / 4;
+			} else {
+				b = (grbi % 4) * 255 / 3;
+				grbi /= 4;
+				r = (grbi % 7) * 255 / 6;
+				grbi /= 7;
+				g = (grbi % 9) * 255 / 8;
+			}
+			rgb[0] = (byte) r;
+			rgb[1] = (byte) g;
+			rgb[2] = (byte) b;
+			
+			rgbs[grb]  = rgb;
+		}
+		return rgbs;
 	}
 
 	public static void main(String[] args) {

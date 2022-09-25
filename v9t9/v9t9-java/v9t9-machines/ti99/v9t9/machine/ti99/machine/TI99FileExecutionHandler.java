@@ -284,7 +284,7 @@ public class TI99FileExecutionHandler implements IFileExecutionHandler {
 				
 				OpenFile file;
 				try {
-					file = new OpenFile(ent.getFile(), catalog.deviceName, ent.fileName);
+					file = new OpenFile(ent.getFile(), ent.fileName);
 				} catch (DsrException e1) {
 					continue;
 				}
@@ -357,7 +357,7 @@ public class TI99FileExecutionHandler implements IFileExecutionHandler {
 		
 		OpenFile file;
 		try {
-			file = new OpenFile(ent.getFile(), catalog.deviceName, ent.fileName);
+			file = new OpenFile(ent.getFile(), ent.fileName);
 		} catch (DsrException e1) {
 			return false;
 		}
@@ -464,7 +464,7 @@ public class TI99FileExecutionHandler implements IFileExecutionHandler {
 		
 		OpenFile file;
 		try {
-			file = new OpenFile(ent.getFile(), catalog.deviceName, ent.fileName);
+			file = new OpenFile(ent.getFile(), ent.fileName);
 		} catch (DsrException e1) {
 			return false;
 		}

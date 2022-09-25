@@ -51,6 +51,7 @@ import v9t9.common.files.CatalogEntry;
 import v9t9.common.files.IEmulatedFile;
 import v9t9.common.machine.IMachine;
 import v9t9.gui.client.swt.shells.FileContentDialog;
+import v9t9.gui.client.swt.shells.FileTextDialog;
 
 public class DiskCatalogDialog extends Dialog {
 	private static final int COLUMN_NAME = 0;
@@ -166,14 +167,15 @@ public class DiskCatalogDialog extends Dialog {
 	private Button pasteFileNameButton;
 	private Button viewContentButton;
 	protected CatalogEntry selectedEntry;
+	private Button viewTextButton;
 	{
-		setShellStyle(getShellStyle() & ~(SWT.APPLICATION_MODAL + SWT.SYSTEM_MODAL) | SWT.RESIZE | SWT.MODELESS);
+		setShellStyle(getShellStyle() & ~(SWT.APPLICATION_MODAL + SWT.SYSTEM_MODAL) | SWT.RESIZE | SWT.MODELESS | SWT.TOOL);
 	}
 
 	public DiskCatalogDialog(Shell parentShell,
 			IMachine machine,
 			Catalog catalog) {
-		super(parentShell);
+		super((Shell) null);
 		this.machine = machine;
 		this.entries = catalog.getEntries();
 		this.catalog = catalog;
@@ -195,7 +197,7 @@ public class DiskCatalogDialog extends Dialog {
 	protected Point getInitialSize() {
 		return new Point(500, 600);
 	}
-
+	
 	/* (non-Javadoc)
 	 * @see org.eclipse.jface.dialogs.Dialog#createButtonsForButtonBar(org.eclipse.swt.widgets.Composite)
 	 */
@@ -268,6 +270,7 @@ public class DiskCatalogDialog extends Dialog {
 				pastePathButton.setEnabled(selectedEntry != null);
 				pasteFileNameButton.setEnabled(selectedEntry != null);
 				viewContentButton.setEnabled(selectedEntry != null);
+				viewTextButton.setEnabled(selectedEntry != null);
 			}
 		});
 		///
@@ -285,10 +288,14 @@ public class DiskCatalogDialog extends Dialog {
 		viewContentButton = new Button(buttons, SWT.PUSH);
 		GridDataFactory.fillDefaults().applyTo(viewContentButton);
 		viewContentButton.setText("View Content");
+		viewTextButton = new Button(buttons, SWT.PUSH);
+		GridDataFactory.fillDefaults().applyTo(viewTextButton);
+		viewTextButton.setText("View Text");
 		
 		pastePathButton.setEnabled(selectedEntry != null);
 		pasteFileNameButton.setEnabled(selectedEntry != null);
 		viewContentButton.setEnabled(selectedEntry != null);
+		viewTextButton.setEnabled(selectedEntry != null);
 
 		pastePathButton.addSelectionListener(new SelectionAdapter() {
 			@Override
@@ -309,6 +316,13 @@ public class DiskCatalogDialog extends Dialog {
 			public void widgetSelected(SelectionEvent e) {
 				if (selectedEntry == null) return;
 				doViewContent(selectedEntry.getFile());
+			}
+		});
+		viewTextButton.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				if (selectedEntry == null) return;
+				doViewText(selectedEntry.getFile());
 			}
 		});
 		table.addMenuDetectListener(new MenuDetectListener() {
@@ -352,16 +366,30 @@ public class DiskCatalogDialog extends Dialog {
 					});
 					
 					
-					final MenuItem viewItem;
-					viewItem = new MenuItem(menu, SWT.NONE);
-					viewItem.setText("View content");
-					
-					viewItem.addSelectionListener(new SelectionAdapter() {
-						@Override
-						public void widgetSelected(SelectionEvent e) {
-							doViewContent(entry.getFile());
-						}
-					});
+					{
+						final MenuItem viewItem;
+						viewItem = new MenuItem(menu, SWT.NONE);
+						viewItem.setText("View content");
+						
+						viewItem.addSelectionListener(new SelectionAdapter() {
+							@Override
+							public void widgetSelected(SelectionEvent e) {
+								doViewContent(entry.getFile());
+							}
+						});
+					}
+					{
+						final MenuItem viewItem;
+						viewItem = new MenuItem(menu, SWT.NONE);
+						viewItem.setText("View text");
+						
+						viewItem.addSelectionListener(new SelectionAdapter() {
+							@Override
+							public void widgetSelected(SelectionEvent e) {
+								doViewText(entry.getFile());
+							}
+						});
+					}
 					
 				}
 
@@ -393,9 +421,13 @@ public class DiskCatalogDialog extends Dialog {
 		});
 		
 	}
-	
 	protected void doViewContent(IEmulatedFile file) {
 		FileContentDialog dialog = new FileContentDialog(getShell());
+		dialog.setFile(file);
+		dialog.open();
+	}
+	protected void doViewText(IEmulatedFile file) {
+		FileTextDialog dialog = new FileTextDialog(getShell());
 		dialog.setFile(file);
 		dialog.open();
 	}

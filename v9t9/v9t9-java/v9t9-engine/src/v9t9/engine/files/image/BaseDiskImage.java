@@ -193,7 +193,7 @@ public abstract class BaseDiskImage implements IPersistable, IDiskImage {
 	 * @param settings 
 	 * 
 	 */
-	public BaseDiskImage( String name, File spec, ISettingsHandler settings) {
+	public BaseDiskImage(String name, File spec, ISettingsHandler settings) {
 		this.name = name;
 		this.spec = spec;
 

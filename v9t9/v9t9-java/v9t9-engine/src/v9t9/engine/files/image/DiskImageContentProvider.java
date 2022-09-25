@@ -53,7 +53,7 @@ public class DiskImageContentProvider implements IEmulatorContentSourceProvider 
 		Catalog catalog = null;
 		IDiskImage image;
 		try {
-			image = imageMapper.createDiskImage(file);
+			image = imageMapper.createDiskImage(file, name);
 		} catch (IOException e1) {
 			e1.printStackTrace();
 			// not disk image 

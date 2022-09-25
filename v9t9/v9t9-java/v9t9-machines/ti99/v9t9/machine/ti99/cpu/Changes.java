@@ -507,6 +507,11 @@ public final class Changes {
 		protected short getVectorAddress() {
 			return state.ea;
 		}
+		@Override
+		protected void doApply(CpuState9900 cpuState) {
+			super.doApply(cpuState);
+			cpuState.setST((short) 0);
+		}
 	}
 	public static class Xop extends SwitchContext {
 		protected int r11;

@@ -21,6 +21,7 @@ import v9t9.common.dsr.IDeviceSettings;
 import v9t9.common.hardware.ISoundChip;
 import v9t9.common.hardware.ISpeechChip;
 import v9t9.common.hardware.IVdpChip;
+import v9t9.common.keyboard.IKeyboardState;
 import v9t9.common.machine.IBaseMachine;
 import v9t9.common.machine.IMachine;
 import v9t9.common.machine.IMachineModel;
@@ -128,6 +129,11 @@ public abstract class BasicMachineModelTest implements IMachineModel {
 	 */
 	@Override
 	public IModuleManager createModuleManager(IMachine machine) {
+		return null;
+	}
+	
+	@Override
+	public IKeyboardState createKeyboardState(IMachine machine) {
 		return null;
 	}
 

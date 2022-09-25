@@ -23,7 +23,6 @@ import ejs.base.settings.ISettingSection;
 import ejs.base.settings.Logging;
 import ejs.base.utils.HexUtils;
 import ejs.base.utils.ListenerList;
-
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.cpu.ICpu;
 import v9t9.common.hardware.ICruChip;
@@ -238,7 +237,7 @@ public class VdpTMS9918A implements IVdpChip, IVdpTMS9918A {
 		/* >8802, status read and acknowledge interrupt */
     	byte ret = vdpStatus;
     	setRegister(REG_ST, vdpStatus & ~VDP_INTERRUPT);
-    	machine.getCru().acknowledgeInterrupt(VDP_INTERRUPT);
+    	machine.getCru().acknowledgeInterrupt(2); // v9t9.machine.ti99.cpu.Cpu9900.INTLEVEL_INTREQ
 
         return ret;
     }
@@ -441,7 +440,7 @@ public class VdpTMS9918A implements IVdpChip, IVdpTMS9918A {
 	 */
 	@Override
 	public int getRegisterCount() {
-		return 8 - getFirstRegister();
+		return 8;
 	}
 	
 
@@ -453,7 +452,7 @@ public class VdpTMS9918A implements IVdpChip, IVdpTMS9918A {
 		BitSet bs = new BitSet();
 		int first = getFirstRegister();
 		//bs.set(REG_SCANLINE - first);
-		bs.set(0 - first, 8);
+		bs.set(0, 8 - first);
 		return bs;
 	}
 

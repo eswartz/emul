@@ -592,7 +592,8 @@ public class ModuleListComposite extends Composite {
 						@Override
 						public void widgetSelected(SelectionEvent e) {
 							menu.dispose();
-							ModuleInfoDialog dialog = new ModuleInfoDialog(machine, null, getShell(), module);
+							ModuleDetailsDialog dialog = new ModuleDetailsDialog(machine, null, getShell(), module);
+							dialog.setBlockOnOpen(false);
 							dialog.open();
 						}
 					});

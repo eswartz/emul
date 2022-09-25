@@ -491,7 +491,7 @@ public class EmuDiskPabHandler extends PabHandler {
 	
 	private void DSKLoad(File file) throws DsrException {
 		
-		OpenFile openFile = new OpenFile(getNativeFile(file), devname, fname);
+		OpenFile openFile = new OpenFile(getNativeFile(file), fname);
 		if (openFile.getNativeFile() == null)
 			throw new DsrException(PabConstants.e_badfiletype, "File not found: " + file);
 		
@@ -531,7 +531,7 @@ public class EmuDiskPabHandler extends PabHandler {
 			openFile.close();
 			block.removeOpenFile(pab.pabaddr);
 		} else {
-			openFile = new OpenFile(getNativeFile(file), devname, fname);
+			openFile = new OpenFile(getNativeFile(file), fname);
 		}
 		if (openFile.isProtected()) {
 			throw new DsrException(PabConstants.e_readonly, null, "File is protected: " + file);
@@ -544,7 +544,7 @@ public class EmuDiskPabHandler extends PabHandler {
 
 	private void DSKSave(File file) throws DsrException {
 
-		OpenFile openFile = new OpenFile(getNativeFile(file), devname, fname);
+		OpenFile openFile = new OpenFile(getNativeFile(file), fname);
 		if (openFile.getNativeFile() != null) {
 			if (openFile.isProtected()) {
 				throw new DsrException(PabConstants.e_readonly, null, "File is protected: " + file);

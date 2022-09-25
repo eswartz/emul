@@ -17,6 +17,7 @@ import v9t9.common.client.ISettingsHandler;
 import v9t9.common.dsr.ISelectableDsrHandler;
 import v9t9.common.hardware.ISoundChip;
 import v9t9.common.hardware.IVdpChip;
+import v9t9.common.keyboard.IKeyboardState;
 import v9t9.common.keyboard.KeyboardConstants;
 import v9t9.common.machine.IMachine;
 import v9t9.common.memory.IMemoryModel;
@@ -150,6 +151,11 @@ public class StandardTI994AMachineModel extends BaseTI99MachineModel {
 	public IModuleManager createModuleManager(IMachine machine) {
 		return new ModuleManager(machine,
 				new String[] { "stock_modules.xml", "problem_modules.xml" });
+	}
+
+	@Override
+	public IKeyboardState createKeyboardState(IMachine machine) {
+		return new KeyboardState994A(machine);
 	}
 	
 	/* (non-Javadoc)

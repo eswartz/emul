@@ -22,6 +22,7 @@ import v9t9.common.dsr.IDeviceSettings;
 import v9t9.common.hardware.ISoundChip;
 import v9t9.common.hardware.ISpeechChip;
 import v9t9.common.hardware.IVdpChip;
+import v9t9.common.keyboard.IKeyboardState;
 import v9t9.common.keyboard.KeyboardConstants;
 import v9t9.common.machine.IMachine;
 import v9t9.common.machine.IMachineModel;
@@ -138,6 +139,11 @@ public class Forth9900MachineModel implements IMachineModel {
 	@Override
 	public ICpu createCPU(IMachine machine) {
 		return new Cpu9900(machine, machine.getVdp());
+	}
+
+	@Override
+	public IKeyboardState createKeyboardState(IMachine machine) {
+		return new KeyboardState994A(machine);
 	}
 	
 	/* (non-Javadoc)

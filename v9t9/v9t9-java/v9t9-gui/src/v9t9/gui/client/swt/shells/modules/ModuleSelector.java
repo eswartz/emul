@@ -55,6 +55,7 @@ import org.eclipse.jface.viewers.ViewerFilter;
 import org.eclipse.jface.window.Window;
 import org.eclipse.jface.wizard.WizardDialog;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.SWTException;
 import org.eclipse.swt.dnd.Clipboard;
 import org.eclipse.swt.dnd.TextTransfer;
 import org.eclipse.swt.dnd.Transfer;
@@ -517,11 +518,15 @@ public class ModuleSelector extends Composite {
 	protected void refreshFilters() {
 		if (viewer.getControl().isDisposed())
 			return;
-		viewer.setFilters(new ViewerFilter[] { 
-				existingModulesFilter,
-				filteredSearchFilter
-			}
-		);
+		try {
+			viewer.setFilters(new ViewerFilter[] { 
+					existingModulesFilter,
+					filteredSearchFilter
+				}
+			);
+		} catch (SWTException e) {
+			
+		}
 	}
 
 	protected void initFilter(String text) {
@@ -903,7 +908,7 @@ public class ModuleSelector extends Composite {
 					return;
 				}
 				
-				if (search.length() > 0) {
+				if (search.length() > 0 && modules.length > 0) {
 					int end = (index + modules.length - 1) % modules.length;
 					for (int i = index; i != end; i = (i + 1) % modules.length) {
 						IModule m = modules[i];
@@ -1383,8 +1388,8 @@ public class ModuleSelector extends Composite {
 	}
 
 	private void showModuleDetails(IModule module) {
-		ModuleInfoDialog dialog = new ModuleInfoDialog(getMachine(), this, window.getShell(), module);
-		
+		ModuleDetailsDialog dialog = new ModuleDetailsDialog(getMachine(), this, window.getShell(), module);
+		dialog.setBlockOnOpen(false);
 		dialog.open();
 	}
 

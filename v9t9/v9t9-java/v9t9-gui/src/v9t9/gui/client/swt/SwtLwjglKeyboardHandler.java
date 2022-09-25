@@ -217,7 +217,7 @@ public class SwtLwjglKeyboardHandler extends SwtKeyboardHandler {
 				scanJoystick(keyboardState, joystick2Handlers, 2);
 			}
 		};
-		machine.getFastMachineTimer().scheduleTask(scanTask, 10);
+		machine.getFastMachineTimer().scheduleTask(scanTask, 20);
 		
 		ControllerEnvironment.getDefaultEnvironment().addControllerListener(new ControllerListener() {
 			

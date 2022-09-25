@@ -98,6 +98,7 @@ abstract class BaseDiskEntry extends FileEntry {
 	protected void showCatalogDialog(final IProperty setting,
 			final Catalog catalog) {
 		Dialog dialog = new DiskCatalogDialog(getShell(), machine, catalog);
+		dialog.setBlockOnOpen(false);
 		dialog.open();
 	}
 

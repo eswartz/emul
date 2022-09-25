@@ -128,10 +128,12 @@ public class GplMmio implements IConsoleMmioReader, IConsoleMmioWriter, IPersist
     		gromraddrflag = false;
     		if (gromwaddrflag) {
     			gromaddr = (short) (gromaddr & 0xff00 | val & 0xff);
+//    			System.out.println("GPL addr >" + HexUtils.toHex4(gromaddr));
     			readGrom();
     		}
-    		else
+    		else {
     			gromaddr = (short) (((val & 0xff) << 8) | gromaddr & 0xff);
+    		}
     		gromwaddrflag = !gromwaddrflag;
     	} else {					
     	    /* >9C00, data write */

@@ -16,7 +16,6 @@ import ejs.base.properties.IProperty;
 import ejs.base.settings.Logging;
 import ejs.base.utils.ListenerList;
 import ejs.base.utils.ListenerList.IFire;
-
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.hardware.ISpeechChip;
 import v9t9.common.speech.ISpeechDataSender;
@@ -118,169 +117,12 @@ final static int FL_last	= 8;
 
 	private void clearToSilence()
 	{
-//		params.pitch = 12;
 		params.energyParam = 0;
 		params.energy = 0;
 		Arrays.fill(params.kVal, 0);
 		voicedEquationNumber = 0;
-		// if the previous frame was unvoiced,
-		// it would sound bad to interpolate.
-		// just clear it all out.
-//		if ((decode & FL_unvoiced) != 0) {
-//			oldParams.pitch = RomTables.pitchtable[12] >> 8;
-//			oldParams.energyParam = 0;
-//			Arrays.fill(oldParams.kVal, 0);
-//			
-//			decode &= ~FL_unvoiced;
-//		}
 	}
 	
-	/**
-	 *	Read an equation from the bit source.
-	 */
-	private void readEquation(ILPCDataFetcher fetcher, boolean forceUnvoiced)
-	{
-		StringBuilder builder = new StringBuilder();
-
-		/* 	Copy now-old 'new' values into 'buffer' values */
-		oldParams.copyFrom(params);
-
-		/*  Read energy  */
-		params.energy = fetcher.fetch(4);
-		builder.append("E: " +  params.energy + " ");
-		
-		if (params.energy == 15) {
-			decode |= FL_last;
-			clearToSilence();	/* clear params */
-		} else if (params.energy == 0) {	/* silent frame */
-			if ((decode & FL_unvoiced) != 0) {	/* unvoiced before? */ 
-				decode |= FL_nointerp;
-			} else {
-				decode &= ~FL_nointerp;
-			}
-			voicedEquationNumber = 0;
-			clearToSilence();	/* clear params */
-		} else {
-			/*  Repeat bit  */
-			params.repeat = fetcher.fetch(1) != 0;
-			builder.append("R: " + params.repeat + " ");
-
-			/*  Pitch code  */
-			params.pitch = fetcher.fetch(6);
-			builder.append("P: " + params.pitch + " ");
-
-			if (params.pitch == 0) {		/* unvoiced */
-				if ((decode & FL_unvoiced) != 0)	/* voiced before? */
-					decode |= FL_nointerp;	/* don't interpolate */
-				else
-					decode &= ~FL_nointerp;
-				decode |= FL_unvoiced;
-				
-				if (oldParams.energy == 0)	/* previous frame silent? */
-					decode |= FL_nointerp;
-				
-				/* reset pitch on voiced->unvoiced transition*/
-				ppctr = 0;
-				voicedEquationNumber = 0;
-				params.pitch = 12;		/* set some pitch */
-
-			} else {				/* voiced */
-
-
-				if ((decode & FL_unvoiced) != 0) {	/* unvoiced before? */
-					decode |= FL_nointerp;	/* don't interpolate */
-					voicedEquationNumber = 0;
-				}
-				else
-					decode &= ~FL_nointerp;
-
-				decode &= ~FL_unvoiced;
-				
-				params.pitch = getRangeAdjustedPitch(params.pitch);
-			}
-
-			/* translate energy */
-			//env = KTRANS(energytable[env]);
-			params.energy = RomTables.energytable[params.energy] >> 6;		// 15-bit to 9-bit
-
-			/*  Get K parameters  */
-
-			if (!params.repeat) {			
-				/* don't repeat previous frame */
-				int         tmp;
-
-				tmp = fetcher.fetch(5);
-				params.kVal[0] = RomTables.k1table[tmp];
-				builder.append("K0: " + tmp + " [" + params.kVal[0] + "] ");
-
-				tmp = fetcher.fetch(5);
-				params.kVal[1] = RomTables.k2table[tmp];
-				builder.append("K1: " + tmp + " [" + params.kVal[1] + "] ");
-
-				tmp = fetcher.fetch(4);
-				params.kVal[2] = RomTables.k3table[tmp];
-				builder.append("K2: " + tmp +" [" + params.kVal[2] + "] ");
-
-				tmp = fetcher.fetch(4);
-				
-				//params.kVal[3] = RomTables.k4table[tmp];
-				params.kVal[3] = RomTables.k3table[tmp];	// bug in pre-TMS5220, according to MAME... 
-				builder.append("K3: " + tmp + " [" + params.kVal[3] + "] ");
-
-
-				if (0 == (decode & FL_unvoiced)) {	/* unvoiced? */
-					tmp = fetcher.fetch(4);
-					params.kVal[4] = RomTables.k5table[tmp];
-					builder.append("K4: " + tmp + " [" + params.kVal[4] + "] ");
-
-
-					tmp = fetcher.fetch(4);
-					params.kVal[5] = RomTables.k6table[tmp];
-					builder.append("K5: " + tmp + " [" + params.kVal[5] + "] ");
-
-					tmp = fetcher.fetch(4);
-					params.kVal[6] = RomTables.k7table[tmp];
-					builder.append("K6: " + tmp + " [" + params.kVal[6] + "] ");
-
-					tmp = fetcher.fetch(3);
-					params.kVal[7] = RomTables.k8table[tmp];
-					builder.append("K7: " + tmp + " [" + params.kVal[7] + "] ");
-
-					tmp = fetcher.fetch(3);
-					params.kVal[8] = RomTables.k9table[tmp];
-					builder.append("K8: " + tmp + " [" + params.kVal[8] + "] ");
-
-					tmp = fetcher.fetch(3);
-					params.kVal[9] = RomTables.k10table[tmp];
-					builder.append("K9: " + tmp + " [" + params.kVal[9] + "] ");
-				} else {
-					params.kVal[4] = 0;
-					params.kVal[5] = 0;
-					params.kVal[6] = 0;
-					params.kVal[7] = 0;
-					params.kVal[8] = 0;
-					params.kVal[9] = 0;
-				}
-			}
-		}
-
-		if (forceUnvoiced) {
-			decode |= FL_unvoiced;
-			params.kVal[4] = 0;
-			params.kVal[5] = 0;
-			params.kVal[6] = 0;
-			params.kVal[7] = 0;
-			params.kVal[8] = 0;
-			params.kVal[9] = 0;
-		}
-
-		Logging.writeLogLine(3, settings.get(ISpeechChip.settingLogSpeech),
-				"Equation: " + builder);
-
-		Logging.writeLogLine(4, settings.get(ISpeechChip.settingLogSpeech),
-				"energy: "+oldParams.energy+" => "+params.energy+", pitch: "+oldParams.pitch+" => "+params.pitch);
-	}
-
 	/**
 	Interpolate "new" values and "buffer" values.
 	*/
@@ -289,14 +131,12 @@ final static int FL_last	= 8;
 		int         x;
 	
 		if (0 == (decode & FL_nointerp)) {
-			oldParams.energy += (params.energy - oldParams.energy) / RomTables.interp_coeff[period];
+			oldParams.energy += (params.energy - oldParams.energy) / (4+RomTables.interp_coeff[period]);
 			if (oldParams.pitch != 0)
-				oldParams.pitch += (params.pitch - oldParams.pitch) / RomTables.interp_coeff[period];
+				oldParams.pitch += (params.pitch - oldParams.pitch) / (4+RomTables.interp_coeff[period]);
 			for (x = 0; x < 10; x++)
-				oldParams.kVal[x] += (params.kVal[x] - oldParams.kVal[x]) / RomTables.interp_coeff[period];
+				oldParams.kVal[x] += (params.kVal[x] - oldParams.kVal[x]) / (4+RomTables.interp_coeff[period]);
 		}
-	
-		//logger(_L|L_1, "[%d] ebf=%d, pbf=%d\n", period, ebf, pbf);
 	}
 
 
@@ -318,6 +158,9 @@ final static int FL_last	= 8;
 		frame = 0;
 		framesize = (length + 7) / 8;
 
+		boolean send = generateSpeech.getBoolean() && senderList != null && !senderList.isEmpty();
+		Object[] senders = senderList.toArray();
+		
 		while (pos < length) {
 			int         samp;
 
@@ -339,10 +182,11 @@ final static int FL_last	= 8;
 					ns2++;
 			} else {
 				/* get next chirp value */
-				U = ppctr < RomTables.chirptable.length ? RomTables.chirptable[ppctr] * oldParams.energy / 128 : 0;
+				int ppidx = ppctr;
+				U = ppidx < RomTables.chirptable.length ? RomTables.chirptable[ppidx] * oldParams.energy / 256 : 0;
 
 				if (oldParams.pitch != 0) 
-					ppctr = (ppctr + 1) % oldParams.pitch;
+					ppctr = (ppctr + 1) % (oldParams.pitch);
 				else	
 					ppctr = 0;
 
@@ -384,11 +228,8 @@ final static int FL_last	= 8;
 
 			samp >>= 1;
 			
-			//if (samp > 511 || samp < -512)
-			//	System.err.println("samp["+pos+"]="+samp);
-
-			if (generateSpeech.getBoolean() && senderList != null && !senderList.isEmpty()) {
-				for (Object o : senderList.toArray()) {
+			if (send) {
+				for (Object o : senders) {
 					((ISpeechDataSender) o).sendSample(LPC_TO_PCM(samp), pos, length);
 				}
 			}
@@ -396,42 +237,6 @@ final static int FL_last	= 8;
 			pos++;
 		}
 	}
-	
-	/**
-	 * One LPC frame consists of decoding one equation (or repeating, or
-	 * stopping), and calculating a speech waveform and outputting it.
-	 * 
-	 * This happens during an interrupt.
-	 * 
-	 * If we're here, we have enough data to form any one equation.
-	 * 
-	 * @param fetcher the mechanism to fetch the next parameter from an equation
-	 * @param length number of samples
-	 * @return true to continue, false if end of frame
-	 */
-	public synchronized boolean frame(ILPCDataFetcher fetcher, int length)
-	{
-		if ((decode & FL_last) != 0) 
-			return false;
-					
-		if ((decode & FL_first) != 0) {
-			midRange = 0;
-			voicedEquationNumber = 0;
-		}
-		else {
-			voicedEquationNumber++;
-		}
-		
-		readEquation(fetcher, forceUnvoiced.getBoolean());
-		if ((decode & FL_nointerp + FL_first) != 0)
-			decode &= ~FL_first;
-		
-		calcFrameData(length);
-		return (decode & FL_last) == 0;	/* not last frame */
-	}
-
-
-	
 
 	/**
 	 *	Apply an equation from the equation fetcher.
@@ -471,8 +276,7 @@ final static int FL_last	= 8;
 				else
 					decode &= ~FL_nointerp;
 				decode |= FL_unvoiced;
-				//params.pitch = 12;		/* set some pitch */
-				params.pitch = (RomTables.pitchtable[12] >> 8) & 0xff;
+				params.pitch = 12;		/* set some pitch */
 
 				if (oldParams.isSilent())	/* previous frame silent? */
 					decode |= FL_nointerp;
@@ -495,7 +299,6 @@ final static int FL_last	= 8;
 			}
 
 			/* translate energy */
-			//env = KTRANS(energytable[env]);
 			params.energy = RomTables.energytable[params.energyParam] >> 6;		// 15-bit to 9-bit
 
 			/*  Get K parameters  */
@@ -503,19 +306,19 @@ final static int FL_last	= 8;
 			if (!params.repeat) {			
 				/* don't repeat previous frame */
 
-				params.kVal[0] = RomTables.k1table[params.kParam[0]];
-				params.kVal[1] = RomTables.k2table[params.kParam[1]];
-				params.kVal[2] = RomTables.k3table[params.kParam[2]];
-//				params.kVal[3] = RomTables.k4table[params.kParam[3]];
-				params.kVal[3] = RomTables.k3table[params.kParam[3]];	// bug in pre-TMS5220, according to MAME... 
+				params.kVal[0] = getNumber(RomTables.k1table[params.kParam[0]]);
+				params.kVal[1] = getNumber(RomTables.k2table[params.kParam[1]]);
+				params.kVal[2] = getNumber(RomTables.k3table[params.kParam[2]]);
+				params.kVal[3] = getNumber(RomTables.k4table[params.kParam[3]]);
+//				params.kVal[3] = getNumber(RomTables.k3table[params.kParam[3]]);	// bug in pre-TMS5220, according to MAME... 
 
 				if (!params.isUnvoiced()) {	/* unvoiced? */
-					params.kVal[4] = RomTables.k5table[params.kParam[4]];
-					params.kVal[5] = RomTables.k6table[params.kParam[5]];
-					params.kVal[6] = RomTables.k7table[params.kParam[6]];
-					params.kVal[7] = RomTables.k8table[params.kParam[7]];
-					params.kVal[8] = RomTables.k9table[params.kParam[8]];
-					params.kVal[9] = RomTables.k10table[params.kParam[9]];
+					params.kVal[4] = getNumber(RomTables.k5table[params.kParam[4]]);
+					params.kVal[5] = getNumber(RomTables.k6table[params.kParam[5]]);
+					params.kVal[6] = getNumber(RomTables.k7table[params.kParam[6]]);
+					params.kVal[7] = getNumber(RomTables.k8table[params.kParam[7]]);
+					params.kVal[8] = getNumber(RomTables.k9table[params.kParam[8]]);
+					params.kVal[9] = getNumber(RomTables.k10table[params.kParam[9]]);
 				} else {
 					params.kVal[4] = 0;
 					params.kVal[5] = 0;
@@ -550,6 +353,10 @@ final static int FL_last	= 8;
 				"energy: "+oldParams.energyParam+" => "+params.energyParam+", pitch: "+oldParams.pitchParam+" => "+params.pitchParam);
 	}	
 	
+	private short getNumber(short s) {
+		return s;
+	}
+
 	/**
 	 * @param pitchVal
 	 * @return

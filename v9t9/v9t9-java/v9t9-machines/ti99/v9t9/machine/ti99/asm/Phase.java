@@ -343,10 +343,14 @@ public abstract class Phase implements IDecompilePhase {
 		changes.appendOperandFetch();
 		return changes.getEA(mop);
 	}
+	
+	public short operandJumpTarget(IHighLevelInstruction inst, IMachineOperand mop) {
+		return (short) (inst.getInst().getPc() + ((MachineOperand9900) mop).val);
+	}
 
 	public boolean operandIsLabel(IHighLevelInstruction inst, IMachineOperand mop) {
 		return mop.isLabel()
-				&& decompileInfo.getMemoryRanges().getRangeContaining(operandEffectiveAddress(
+				&& decompileInfo.getMemoryRanges().getRangeContaining(operandJumpTarget(
 						inst, mop)) != null;
 	}
 

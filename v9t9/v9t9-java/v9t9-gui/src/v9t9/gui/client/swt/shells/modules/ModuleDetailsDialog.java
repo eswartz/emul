@@ -49,7 +49,7 @@ import v9t9.common.modules.ModuleInfo;
 import ejs.base.settings.DialogSettingsWrapper;
 import ejs.base.utils.TextUtils;
 
-final class ModuleInfoDialog extends Dialog {
+final class ModuleDetailsDialog extends Dialog {
 	/**
 	 * 
 	 */
@@ -58,7 +58,7 @@ final class ModuleInfoDialog extends Dialog {
 	private IMachine machine;
 	private ModuleImages images;
 
-	ModuleInfoDialog(IMachine machine, ModuleSelector moduleSelector, Shell parentShell, IModule module) {
+	ModuleDetailsDialog(IMachine machine, ModuleSelector moduleSelector, Shell parentShell, IModule module) {
 		super(parentShell);
 		this.machine = machine;
 		this.moduleSelector = moduleSelector;
@@ -70,7 +70,7 @@ final class ModuleInfoDialog extends Dialog {
 	 */
 	@Override
 	protected void setShellStyle(int newShellStyle) {
-		super.setShellStyle(newShellStyle | SWT.RESIZE | SWT.TOOL | SWT.CLOSE);
+		super.setShellStyle((newShellStyle & ~SWT.APPLICATION_MODAL) | SWT.RESIZE | SWT.TOOL | SWT.CLOSE | SWT.MODELESS);
 	}
 	
 	/* (non-Javadoc)

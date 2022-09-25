@@ -24,7 +24,6 @@ import v9t9.common.memory.ByteMemoryAccess;
 
 /** Information about an open file. */
 public class OpenFile {
-	final String devName;
 	final String fileName;
 	final byte[] sector = new byte[256];
 //	private final File file;
@@ -40,9 +39,8 @@ public class OpenFile {
 	
 	boolean modified;
 	
-	public OpenFile(IEmulatedFile file, String devName, String fileName) throws DsrException {
+	public OpenFile(IEmulatedFile file, String fileName) throws DsrException {
 		this.emulFile = file;
-		this.devName = devName;
 		this.fileName = fileName;
 		
 		if (emulFile != null) {
@@ -154,7 +152,11 @@ public class OpenFile {
 		if (isVariable()) {
 			size = 0;
 			while (position < emulFile.getFileSize()) {
-				size = sector[byteoffs++] & 0xff;
+				if (byteoffs >= sector.length) {
+					size = 0xff;
+				} else {
+					size = sector[byteoffs++] & 0xff;
+				}
 				position++;
 				if (size == 0xff) {
 					nextSector();

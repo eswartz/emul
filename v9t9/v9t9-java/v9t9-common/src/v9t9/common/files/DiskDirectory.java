@@ -101,7 +101,7 @@ public class DiskDirectory implements IDiskDirectory {
 	 */
 	@Override
 	public boolean isFormatted() {
-		return dir.exists();
+		return dir != null && dir.exists();
 	}
 
 	/* (non-Javadoc)
@@ -109,6 +109,6 @@ public class DiskDirectory implements IDiskDirectory {
 	 */
 	@Override
 	public boolean isValid() {
-		return true;
+		return dir != null;
 	}
 }

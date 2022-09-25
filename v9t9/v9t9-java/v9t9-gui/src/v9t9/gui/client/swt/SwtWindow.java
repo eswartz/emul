@@ -36,6 +36,9 @@ import org.eclipse.swt.events.MouseAdapter;
 import org.eclipse.swt.events.MouseEvent;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
+import org.eclipse.swt.events.ShellAdapter;
+import org.eclipse.swt.events.ShellEvent;
+import org.eclipse.swt.events.ShellListener;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.graphics.Rectangle;
@@ -396,10 +399,9 @@ public class SwtWindow extends BaseEmulatorWindow {
 		});
 		videoRenderer.setFocus();
 		
-		shell.addDisposeListener(new DisposeListener() {
-			
+		shell.addShellListener(new ShellAdapter() {
 			@Override
-			public void widgetDisposed(DisposeEvent e) {
+			public void shellClosed(ShellEvent e) {
 				machine.getEventNotifier().removeListener(eventListener);
 
 				String boundsPref = SwtPrefUtils.writeBoundsString(shell.getBounds());
@@ -412,30 +414,27 @@ public class SwtWindow extends BaseEmulatorWindow {
 				dispose();				
 
 			}
-		});
-		
-		// restore original window geometry
-		String boundsPref = settingsHandler.get(settingEmulatorWindowBounds).getString();
-		final Rectangle rect = SwtPrefUtils.readBoundsString(boundsPref);
-		if (rect != null) {
-			Display.getDefault().asyncExec(new Runnable() {
-				public void run() {
+			
+			@Override
+			public void shellActivated(ShellEvent e) {
+				// restore original window geometry
+				String boundsPref = settingsHandler.get(settingEmulatorWindowBounds).getString();
+				final Rectangle rect = SwtPrefUtils.readBoundsString(boundsPref);
+				if (rect != null) {
 					if (!fullScreen.getBoolean()) {
 						adjustRectVisibility(shell, rect);
-						shell.setBounds(rect);
 						setFullscreen(false);
+						shell.setBounds(rect);
 					} else {
 						setFullscreen(true);
 					}
 					
 					attachControlListener();
+				} else {
+					attachControlListener();
 				}
-			});
-		} else {
-			attachControlListener();
-		}
-
-
+			}
+		});
 	}
 	
 	

@@ -57,7 +57,7 @@ public class PabInfoBlock {
 			openFileCount++;
 		}
 
-		pabfile = new OpenFile(nativefile, devName, fileName);
+		pabfile = new OpenFile(nativefile, fileName);
 		openFiles.put(pabaddr, pabfile);
 		return pabfile;
 	}

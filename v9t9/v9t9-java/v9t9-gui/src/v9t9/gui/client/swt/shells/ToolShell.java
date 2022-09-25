@@ -74,14 +74,26 @@ public class ToolShell {
 		final GridData data = GridDataFactory.fillDefaults().grab(true, true).hint(400, 300).create();
 		toolControl.setLayoutData(data);
 		
-		shell.addDisposeListener(new DisposeListener() {
-			public void widgetDisposed(DisposeEvent e) {
+		shell.addShellListener(new ShellAdapter() {
+			@Override
+			public void shellClosed(ShellEvent e) {
 				toolControl.dispose();
 				Display.getDefault().asyncExec(new Runnable() {
 					public void run() {
 						focusRestorer.restoreFocus();
 					}
 				});
+				
+				if (boundsPref != null) {
+					shell.addDisposeListener(new DisposeListener() {
+						public void widgetDisposed(DisposeEvent e) {
+							Rectangle bounds = shell.getBounds();
+							String boundsStr = SwtPrefUtils.writeBoundsString(bounds);
+							boundsPref.setString(boundsStr);
+						}
+					});
+				}
+
 			}
 		});
 
@@ -154,16 +166,6 @@ public class ToolShell {
 				data.heightHint = toolControl.getSize().y;
 			}
 		});
-		
-		if (boundsPref != null) {
-			shell.addDisposeListener(new DisposeListener() {
-				public void widgetDisposed(DisposeEvent e) {
-					Rectangle bounds = shell.getBounds();
-					String boundsStr = SwtPrefUtils.writeBoundsString(bounds);
-					boundsPref.setString(boundsStr);
-				}
-			});
-		}
 	}
 	
 	/**

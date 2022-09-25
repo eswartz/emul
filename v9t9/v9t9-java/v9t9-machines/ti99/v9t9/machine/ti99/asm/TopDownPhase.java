@@ -327,7 +327,7 @@ public class TopDownPhase extends Phase {
 	 * @return
 	 */
 	private IOperand handleLabel(IHighLevelInstruction inst, IMachineOperand mop) {
-		IOperand op = handleLabel(inst, operandEffectiveAddress(inst, mop));
+		IOperand op = handleLabel(inst, operandJumpTarget(inst, mop));
 		return op;
 	}
 

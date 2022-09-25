@@ -506,6 +506,11 @@ public class ImageImport {
 				mapColor = new RGB444MapColor(useColorMappedGreyScale);
 				setChannelDepth(4);
 				break;
+			case 240:
+				// 240 color + 16 greys
+				mapColor = new RGB865MapColor(useColorMappedGreyScale);
+				setChannelDepth(3);
+				break;
 			}
 			
 			firstColor = 0;

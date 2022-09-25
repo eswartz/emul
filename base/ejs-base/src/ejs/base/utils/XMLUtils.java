@@ -98,9 +98,11 @@ public class XMLUtils {
 	 * @returns the text or <code>null</code>
 	 */
 	public static String getText(Element element) {
-		NodeList nodeList = element.getChildNodes();
-		if (nodeList.item(0) instanceof Text) {
-			return nodeList.item(0).getTextContent();
+		if (element != null) {
+			NodeList nodeList = element.getChildNodes();
+			if (nodeList.item(0) instanceof Text) {
+				return nodeList.item(0).getTextContent();
+			}
 		}
 		return null;
 	}

@@ -161,9 +161,9 @@ public class DiskImageMapper implements IDiskImageMapper {
 	 * @see v9t9.common.files.IDiskImageMapper#createDiskImage(java.io.File)
 	 */
 	@Override
-	public IDiskImage createDiskImage(File file) throws IOException {
+	public IDiskImage createDiskImage(File file, String name) throws IOException {
 		return DiskImageFactory.createDiskImage(
-				settings, "DSK1", file);
+				settings, name, file);
 	}
 	
 	/* (non-Javadoc)

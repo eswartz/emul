@@ -612,6 +612,8 @@ public class Executor implements IExecutor {
         	    	            }
         	    	            if (pauseMachine.getBoolean()) {
         	    	            	Thread.sleep(50);
+        	    	            } else {
+        	    	            	Thread.sleep(0, 1);
         	    	            }
             				}
             			}
