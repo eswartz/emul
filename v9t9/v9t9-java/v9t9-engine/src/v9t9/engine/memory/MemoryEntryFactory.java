@@ -235,7 +235,7 @@ public class MemoryEntryFactory implements IMemoryEntryFactory {
 			try {
 				klass = Class.forName(klazzName);
 				
-				entry = (MemoryEntry) klass.newInstance();
+				entry = (MemoryEntry) klass.getDeclaredConstructor().newInstance();
 			} catch (Exception e) {
 				// in case packages change...
 				if (klazzName.endsWith(".DiskMemoryEntry")) {

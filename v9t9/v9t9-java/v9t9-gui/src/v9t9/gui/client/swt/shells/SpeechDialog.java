@@ -59,14 +59,14 @@ public class SpeechDialog extends Composite {
 				machine, ISpeechChip.settingTalkSpeed);
 		
 		label = new Label(this, SWT.WRAP);
-		label.setText("Talk Rate");
+		label.setText("Talk Rate %");
 		GridDataFactory.fillDefaults().grab(false, false).applyTo(label);
 		
 		final Spinner rateSpinner = new Spinner(this, SWT.NONE);
-		rateSpinner.setToolTipText("Adjust how fast speech is generated (1 = normal, 0.5 = half speed, etc.)");
-		rateSpinner.setMinimum(10);
+		rateSpinner.setToolTipText("Adjust percentage for speech (100 = normal, 50 = half speed, etc.)");
 		rateSpinner.setMaximum(500);
-		rateSpinner.setDigits(2);
+		rateSpinner.setMinimum(10);
+//		rateSpinner.setDigits(2); // broken in SWT!  Casts getSelection()'s double to int :-p
 		rateSpinner.setSelection((int) (talkRateProperty.getDouble() * 100));
 		GridDataFactory.fillDefaults().grab(true, false).applyTo(rateSpinner);
 		
@@ -77,8 +77,6 @@ public class SpeechDialog extends Composite {
 			}
 		});
 		
-		
-
 		
 		// whisper
 		forceUnvoicedProperty = (ISettingProperty) Settings.get(

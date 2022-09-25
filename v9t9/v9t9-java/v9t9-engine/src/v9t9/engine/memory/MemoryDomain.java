@@ -98,6 +98,11 @@ public class MemoryDomain implements IMemoryAccess, IPersistable, IMemoryDomain 
 		this(id, id, false, 0);
 	}
 	
+	@Override
+	public String toString() {
+		return id + " #" + size;
+	}
+	
 	/* (non-Javadoc)
 	 * @see v9t9.common.memory.IMemoryDomain#getSize()
 	 */
@@ -467,9 +472,15 @@ public class MemoryDomain implements IMemoryAccess, IPersistable, IMemoryDomain 
 			return;
 		}
 
+		Set<Integer> addrs = new HashSet<Integer>();
+		
 		for (ISettingSection entryStore : section.getSections()) {
 			String name = entryStore.get("Name");
 			int addr = entryStore.getInt("Address");
+			if (!addrs.add(addr)) {
+				// some older saves had older modules mixed in
+				continue;
+			}
 			IMemoryEntry entry = findMappedEntry(name, addr);
 			if (entry != null) {
 				try {

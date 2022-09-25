@@ -39,6 +39,7 @@ public interface IRegisterAccess {
 	class RegisterInfo {
 		public final String id;
 		public final int flags;
+		/** size in bytes */
 		public final int size;
 		public final String description;
 		public IMemoryDomain domain;
@@ -62,7 +63,7 @@ public interface IRegisterAccess {
 	
 	/** Read register without any cycle side effects */
 	int getRegister(int reg);
-	/** Write register without any cycle side effects */
+	/** Write register without any cycle side effects, return old value */
 	int setRegister(int reg, int newValue);
 	
 	String getRegisterTooltip(int reg);

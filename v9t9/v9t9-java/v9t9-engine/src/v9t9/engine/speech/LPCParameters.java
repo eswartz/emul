@@ -205,23 +205,14 @@ public class LPCParameters implements ILPCParameters {
 	}
 
 
-	/**
-	 * @return
-	 */
 	public boolean isLast() {
 		return energyParam == 15;
 	}
 
-	/**
-	 * @return
-	 */
 	public boolean isSilent() {
 		return energyParam == 0;
 	}
 
-	/**
-	 * @return
-	 */
 	public boolean isUnvoiced() {
 		return pitchParam == 0;
 	}

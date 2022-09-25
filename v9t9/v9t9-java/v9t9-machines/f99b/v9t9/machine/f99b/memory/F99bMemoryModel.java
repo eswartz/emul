@@ -236,7 +236,7 @@ public class F99bMemoryModel extends BaseTI994AMemoryModel {
 	 */
 	@Override
 	public void initMemory(IBaseMachine machine) {
-		gplMmio = new GplMmio(machine, GRAPHICS); 
+		gplMmio = new GplMmio(((IMachine) machine).getGpl()); 
 		super.initMemory(machine);
 	}
 }

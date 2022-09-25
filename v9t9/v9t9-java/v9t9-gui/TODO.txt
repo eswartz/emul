@@ -1,6 +1,8 @@
 
 -- switching disk DSRs does not reset properly (even with hard reset); need to restart
 
+-- loading machine images < 2015 locks up
+
 -- loading machine images from another machine does not properly kill & restart client
 
 Fix keyboard implementation:

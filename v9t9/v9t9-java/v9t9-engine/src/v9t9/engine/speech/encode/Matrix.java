@@ -27,7 +27,7 @@ public class Matrix {
 		this.data = new float[rows * cols];
 	}
 	
-	public float at(int row, int col) {
+	public final float at(int row, int col) {
 		return data[row * cols + col];
 	}
 
@@ -106,12 +106,7 @@ public class Matrix {
 	    return rank;
 	}
 
-	/**
-	 * @param r
-	 * @param c
-	 * @param f
-	 */
-	public void set(int r, int c, float f) {
+	public final void set(int r, int c, float f) {
 		data[r * cols + c] = f;
 	}
 

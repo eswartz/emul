@@ -285,6 +285,7 @@ public abstract class BaseDiskImage implements IPersistable, IDiskImage {
 	 * @throws IOException
 	 * @throws FileNotFoundException
 	 */
+	@SuppressWarnings("resource")
 	public void openDiskImage(boolean readOnly) throws IOException {
 		if (getHandle() != null)
 			closeDiskImage();

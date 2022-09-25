@@ -11,7 +11,6 @@
 package v9t9.machine.f99b.machine;
 
 
-import ejs.base.settings.ISettingSection;
 import v9t9.common.client.IKeyboardHandler;
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.files.IFileExecutionHandler;
@@ -49,23 +48,7 @@ public class F99bMachine extends MachineBase {
 	public TIMemoryModel getMemoryModel() {
 		return (TIMemoryModel) super.getMemoryModel();
 	}
-	/* (non-Javadoc)
-	 * @see v9t9.emulator.common.Machine#doLoadState(v9t9.base.core.settings.ISettingSection)
-	 */
-	@Override
-	protected void doLoadState(ISettingSection section) {
-		super.doLoadState(section);
-		getMemoryModel().getGplMmio().loadState(section.getSection("GPL"));
-	}
-	/* (non-Javadoc)
-	 * @see v9t9.emulator.common.Machine#doSaveState(v9t9.base.core.settings.ISettingSection)
-	 */
-	@Override
-	protected void doSaveState(ISettingSection settings) {
-		super.doSaveState(settings);
-		getMemoryModel().getGplMmio().saveState(settings.addSection("GPL"));
-	}
-
+	
 	/* (non-Javadoc)
 	 * @see v9t9.emulator.hardware.TI99Machine#getGplMemoryDomain()
 	 */

@@ -18,6 +18,7 @@ import v9t9.common.client.ISettingsHandler;
 import v9t9.common.cpu.ICpu;
 import v9t9.common.dsr.IDeviceIndicatorProvider;
 import v9t9.common.dsr.IDeviceSettings;
+import v9t9.common.hardware.IGplChip;
 import v9t9.common.hardware.ISoundChip;
 import v9t9.common.hardware.ISpeechChip;
 import v9t9.common.hardware.IVdpChip;
@@ -46,6 +47,7 @@ public interface IMachineModel {
 	ICpu createCPU(IMachine machine);
 	
 	IVdpChip createVdp(IMachine machine);
+	IGplChip createGpl(IMachine machine);
 
 	ISoundChip createSoundChip(IMachine machine);
 	

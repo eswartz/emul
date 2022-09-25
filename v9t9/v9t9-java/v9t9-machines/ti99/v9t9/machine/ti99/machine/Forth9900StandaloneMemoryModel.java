@@ -250,7 +250,7 @@ public class Forth9900StandaloneMemoryModel extends BaseTI994AMemoryModel {
 	 */
 	@Override
 	public void initMemory(IBaseMachine machine) {
-		gplMmio = new GplMmio(machine, GRAPHICS); 
+		gplMmio = new GplMmio(((IMachine) machine).getGpl()); 
 		super.initMemory(machine);
 	}
 }

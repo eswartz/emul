@@ -16,6 +16,12 @@ import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import ejs.base.properties.IProperty;
+import ejs.base.properties.IPropertyListener;
+import ejs.base.settings.ISettingSection;
+import ejs.base.timer.FastTimer;
+import ejs.base.utils.ListenerList;
+import ejs.base.utils.ListenerList.IFire;
 import v9t9.common.asm.IRawInstructionFactory;
 import v9t9.common.cassette.ICassetteChip;
 import v9t9.common.client.IClient;
@@ -40,6 +46,7 @@ import v9t9.common.files.IFileExecutionHandler;
 import v9t9.common.files.IPathFileLocator;
 import v9t9.common.files.PathFileLocator;
 import v9t9.common.hardware.ICruChip;
+import v9t9.common.hardware.IGplChip;
 import v9t9.common.hardware.ISoundChip;
 import v9t9.common.hardware.ISpeechChip;
 import v9t9.common.hardware.IVdpChip;
@@ -62,14 +69,7 @@ import v9t9.engine.files.EmulatedFileHandler;
 import v9t9.engine.files.directory.DiskDirectoryMapper;
 import v9t9.engine.files.directory.EmuDiskSettings;
 import v9t9.engine.files.image.DiskImageMapper;
-import v9t9.engine.keyboard.KeyboardState;
 import v9t9.engine.memory.DiskMemoryEntry;
-import ejs.base.properties.IProperty;
-import ejs.base.properties.IPropertyListener;
-import ejs.base.settings.ISettingSection;
-import ejs.base.timer.FastTimer;
-import ejs.base.utils.ListenerList;
-import ejs.base.utils.ListenerList.IFire;
 
 /** Encapsulate all the information about a running emulated machine.
  * @author ejs
@@ -132,6 +132,8 @@ abstract public class MachineBase implements IMachine {
 	private List<IPrinterImageHandler> printerImageHandlers = new ArrayList<IPrinterImageHandler>(1);
 
 	private IModuleDetector moduleDetector;
+
+	private IGplChip gpl;
 
     public MachineBase(ISettingsHandler settings, IMachineModel machineModel) {
     	this.settings = settings;
@@ -208,6 +210,7 @@ abstract public class MachineBase implements IMachine {
 		demoManager = new DemoManager(this);
 		
     	vdp = machineModel.createVdp(this);
+    	gpl = machineModel.createGpl(this);
     	sound = machineModel.createSoundChip(this);
     	speech = machineModel.createSpeechChip(this);
     	cassette = machineModel.createCassetteChip(this);
@@ -452,6 +455,8 @@ abstract public class MachineBase implements IMachine {
 		cpu.saveState(settings.addSection("CPU"));
 		memory.saveState(settings.addSection("Memory"));
 		vdp.saveState(settings.addSection("VDP"));
+		if (gpl != null)
+			gpl.saveState(settings.addSection("GPL"));
 		if (sound != null)
 			sound.saveState(settings.addSection("Sound"));
 		if (speech != null)
@@ -476,16 +481,11 @@ abstract public class MachineBase implements IMachine {
 		cpuTimer.cancel();
 		videoTimer.cancel();
 		*/
-		
 		boolean wasExecuting = executor.setExecuting(false);
 		
 		settings.get(DataFiles.settingUserRomsPath).loadState(section);
 		
 		doLoadState(section);
-		
-		//Executor.settingDumpFullInstructions.setBoolean(true);
-		
-		//start();
 
 		executor.setExecuting(wasExecuting);
 	}
@@ -499,6 +499,8 @@ abstract public class MachineBase implements IMachine {
 		memory.loadMemory(eventNotifier, section.getSection("Memory"));
 		cpu.loadState(section.getSection("CPU"));
 		vdp.loadState(section.getSection("VDP"));
+		if (gpl != null)
+			gpl.loadState(section.getSection("GPL"));
 		if (sound != null)
 			sound.loadState(section.getSection("Sound"));
 		if (speech != null)
@@ -594,6 +596,11 @@ abstract public class MachineBase implements IMachine {
 	@Override
 	public IVdpChip getVdp() {
 		return vdp;
+	}
+	
+	@Override
+	public IGplChip getGpl() {
+		return gpl;
 	}
 
 	/* (non-Javadoc)

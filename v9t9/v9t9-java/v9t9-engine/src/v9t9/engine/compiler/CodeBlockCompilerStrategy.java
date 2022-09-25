@@ -95,7 +95,7 @@ public class CodeBlockCompilerStrategy implements ICompilerStrategy {
 	private CodeBlock getCodeBlock(int pc) {
 	    IMemoryEntry ent = executor.getCpu().getConsole().getEntryAt(pc);
 	    
-	    Integer blockaddr = new Integer(pc & ~(BLOCKSIZE - 1));
+	    Integer blockaddr = Integer.valueOf(pc & ~(BLOCKSIZE - 1));
 	    Pair<IMemoryArea, Integer> key = new Pair<IMemoryArea, Integer>(ent.getArea(), blockaddr);
 	    CodeBlock cb;
 	    if ((cb = codeblocks.get(key)) == null

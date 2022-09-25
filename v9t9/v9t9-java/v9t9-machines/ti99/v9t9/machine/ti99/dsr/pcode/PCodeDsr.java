@@ -22,6 +22,7 @@ import v9t9.common.dsr.IDeviceIndicatorProvider;
 import v9t9.common.dsr.IMemoryTransfer;
 import v9t9.common.events.NotifyEvent.Level;
 import v9t9.common.files.MD5FilterAlgorithms;
+import v9t9.common.machine.IMachine;
 import v9t9.common.memory.IMemory;
 import v9t9.common.memory.IMemoryDomain;
 import v9t9.common.memory.IMemoryEntry;
@@ -32,6 +33,7 @@ import v9t9.common.settings.SettingSchemaProperty;
 import v9t9.common.settings.Settings;
 import v9t9.engine.dsr.DeviceIndicatorProvider;
 import v9t9.engine.dsr.IDevIcons;
+import v9t9.engine.memory.GplChip;
 import v9t9.engine.memory.GplMmio;
 import v9t9.engine.memory.MemoryDomain;
 import v9t9.engine.memory.MemoryEntry;
@@ -283,7 +285,7 @@ public class PCodeDsr implements IDsrHandler9900 {
 		}
 		
 		if (pcodeGromMmio == null) {
-			pcodeGromMmio = new GplMmio(machine, pcodeDomain);
+			pcodeGromMmio = new GplMmio(new GplChip(machine, pcodeDomain));
 			readMmioEntry = null;
 			writeMmioEntry = null;
 		}

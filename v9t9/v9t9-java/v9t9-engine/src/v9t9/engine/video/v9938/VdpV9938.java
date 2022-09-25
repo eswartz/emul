@@ -97,7 +97,7 @@ public class VdpV9938 extends VdpTMS9918A implements IVdpV9938 {
 	/* 3579545 / 60 target # cycles to be executed per tick */
     static public final SettingSchema settingMsxClockDivisor = new SettingSchema(
     		ISettingsHandler.MACHINE,
-    		"MsxClockDivisor", new Integer(6));
+    		"MsxClockDivisor", Integer.valueOf(6));
 
 	/* from mame and blueMSX:
 	 * 

@@ -81,7 +81,6 @@ public class TI99Machine extends MachineBase {
 	@Override
 	protected void doLoadState(ISettingSection section) {
 		super.doLoadState(section);
-		getMemoryModel().getGplMmio().loadState(section.getSection("GPL"));
 		if (dsrManager != null)
 			dsrManager.loadState(section.getSection("DSRs"));
 	}
@@ -91,7 +90,6 @@ public class TI99Machine extends MachineBase {
 	@Override
 	protected void doSaveState(ISettingSection settings) {
 		super.doSaveState(settings);
-		getMemoryModel().getGplMmio().saveState(settings.addSection("GPL"));
 		if (dsrManager != null)
 			dsrManager.saveState(settings.addSection("DSRs"));
 

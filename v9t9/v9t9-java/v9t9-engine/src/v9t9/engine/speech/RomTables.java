@@ -11,7 +11,7 @@
 package v9t9.engine.speech;
 
 /**
- * This file is adapted from TMS5220 listings via XMAME
+ * This file is adapted from TMS5220 listings via MAME
  * @author ejs
  *
  */
@@ -148,17 +148,19 @@ public class RomTables {
 		0x0f, (byte) 0xff, (byte) 0xf8, (byte) 0xee,
 		(byte) 0xed, (byte) 0xef, (byte) 0xf7, (byte) 0xf6,
 		(byte) 0xfa, 0x00, 0x03, 0x02,
-		0x01
+		0x01, 0x00, 0x00, 0x00,
+		0x00, 0x00, 0x00, 0x00,
+		0x00, 0x00, 0x00
 	};
 
 	/* interpolation coefficients */
 
 	final static public byte interp_coeff[] = {
-		8, 8, 8, 4, 4, 2, 2, 1
+		3, 3, 3, 2, 2, 1, 1, 0
 	};
 
 	public final static short[][] ktable = {
-		k1table, k2table, k3table, k4table, k5table, k6table,
+		k1table, k2table, k3table, /*k4table*/ k3table, k5table, k6table,
 		k7table, k8table, k9table, k10table
 	};
 

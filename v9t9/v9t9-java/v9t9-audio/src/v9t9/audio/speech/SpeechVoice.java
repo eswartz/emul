@@ -42,10 +42,6 @@ public class SpeechVoice implements ISpeechSoundVoice {
 		this.soundClock = (int) output.getSoundFormat().getFrameRate();
 	}
 	
-	public void setSoundClock(int soundClock) {
-		this.soundClock = soundClock;
-	}
-	
 	public void reset() {
 		lastSample = 0;
 		//synchronized (samples) { 

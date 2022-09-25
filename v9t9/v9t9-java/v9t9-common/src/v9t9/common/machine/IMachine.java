@@ -21,6 +21,7 @@ import v9t9.common.events.IEventNotifier;
 import v9t9.common.files.IEmulatedFileHandler;
 import v9t9.common.files.IPathFileLocator;
 import v9t9.common.hardware.ICruChip;
+import v9t9.common.hardware.IGplChip;
 import v9t9.common.hardware.ISoundChip;
 import v9t9.common.hardware.ISpeechChip;
 import v9t9.common.hardware.IVdpChip;
@@ -53,6 +54,8 @@ public interface IMachine extends IBaseMachine {
 	IModuleManager getModuleManager();
 
 	IVdpChip getVdp();
+
+	IGplChip getGpl();
 
 	/**
 	 * @return
@@ -120,4 +123,5 @@ public interface IMachine extends IBaseMachine {
 	void addEmulatorContentProvider(IEmulatorContentSourceProvider provider);
 
 	IPrinterImageHandler[] getPrinterImageHandlers();
+
 }

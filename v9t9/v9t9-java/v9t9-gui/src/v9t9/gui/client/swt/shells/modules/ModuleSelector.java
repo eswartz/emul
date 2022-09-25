@@ -122,6 +122,10 @@ import ejs.base.settings.ISettingSection;
  *
  */
 public class ModuleSelector extends Composite {
+	static {
+		// our Comparator is broken...
+		System.setProperty("java.util.Arrays.useLegacyMergeSort", "true");
+	}
 
 	public static final String MODULE_SELECTOR_TOOL_ID = "module.selector";
 

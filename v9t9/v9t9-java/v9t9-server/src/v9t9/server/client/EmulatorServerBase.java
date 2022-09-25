@@ -31,6 +31,7 @@ import v9t9.common.events.NotifyEvent.Level;
 import v9t9.common.events.NotifyException;
 import v9t9.common.files.DataFiles;
 import v9t9.common.files.IPathFileLocator;
+import v9t9.common.hardware.IGplChip;
 import v9t9.common.hardware.IVdpChip;
 import v9t9.common.machine.IMachine;
 import v9t9.common.machine.IMachineModel;
@@ -99,7 +100,7 @@ public abstract class EmulatorServerBase {
     	settings = new SettingsHandler(WorkspaceSettings.currentWorkspace.getString()); 
 		
     	settings.get(IVdpChip.settingDumpVdpAccess).setBoolean(true);
-		settings.get(GplMmio.settingDumpGplAccess).setBoolean(true);
+		settings.get(IGplChip.settingDumpGplAccess).setBoolean(true);
 		
 		bootRomsPath = settings.get(DataFiles.settingBootRomsPath);
 		storedRamPath = settings.get(DataFiles.settingStoredRamPath);
@@ -239,6 +240,8 @@ public abstract class EmulatorServerBase {
 	        
 			if (!changedMachines) {
 				loadState(machine.getClient(), machine, settings);
+				
+				saveState(filename + ".chk");
 			}
 			else {
 				runServer();

@@ -15,16 +15,19 @@ import java.net.URL;
 
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.dsr.ISelectableDsrHandler;
+import v9t9.common.hardware.IGplChip;
 import v9t9.common.hardware.ISoundChip;
 import v9t9.common.hardware.IVdpChip;
 import v9t9.common.keyboard.IKeyboardState;
 import v9t9.common.keyboard.KeyboardConstants;
 import v9t9.common.machine.IMachine;
+import v9t9.common.memory.IMemoryDomain;
 import v9t9.common.memory.IMemoryModel;
 import v9t9.common.modules.IModuleManager;
 import v9t9.engine.dsr.rs232.RS232Controllers;
 import v9t9.engine.files.image.FDCControllers;
 import v9t9.engine.files.image.RealDiskSettings;
+import v9t9.engine.memory.GplChip;
 import v9t9.engine.modules.ModuleManager;
 import v9t9.engine.sound.SoundTMS9919;
 import v9t9.engine.video.tms9918a.VdpTMS9918A;
@@ -90,6 +93,11 @@ public class StandardTI994AMachineModel extends BaseTI99MachineModel {
 	public IVdpChip createVdp(IMachine machine) {
 		VdpTMS9918A vdp = new VdpTMS9918A(machine);
 		return vdp;
+	}
+	
+	@Override
+	public IGplChip createGpl(IMachine machine) {
+		return new GplChip(machine, machine.getMemory().getDomain(IMemoryDomain.NAME_GRAPHICS));
 	}
 	
 	public void defineDevices(IMachine machine_) {

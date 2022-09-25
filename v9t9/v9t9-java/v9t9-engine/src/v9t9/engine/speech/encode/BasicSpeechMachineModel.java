@@ -19,6 +19,7 @@ import v9t9.common.client.ISettingsHandler;
 import v9t9.common.cpu.ICpu;
 import v9t9.common.dsr.IDeviceIndicatorProvider;
 import v9t9.common.dsr.IDeviceSettings;
+import v9t9.common.hardware.IGplChip;
 import v9t9.common.hardware.ISoundChip;
 import v9t9.common.hardware.ISpeechChip;
 import v9t9.common.hardware.IVdpChip;
@@ -93,6 +94,11 @@ public class BasicSpeechMachineModel implements IMachineModel {
 	 */
 	@Override
 	public IVdpChip createVdp(IMachine machine) {
+		return null;
+	}
+	
+	@Override
+	public IGplChip createGpl(IMachine machine) {
 		return null;
 	}
 

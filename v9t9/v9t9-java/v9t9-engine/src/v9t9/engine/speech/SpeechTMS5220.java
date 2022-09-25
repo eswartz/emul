@@ -496,7 +496,7 @@ public class SpeechTMS5220 implements ISpeechChip {
 		status |= SS_TS;
 		speaking = true;
 
-		SpeechOn();
+		speechOn();
 		
 		//machine.getFastMachineTimer().scheduleTask(awaitSpeechCompletion, 10);
 		
@@ -517,7 +517,7 @@ public class SpeechTMS5220 implements ISpeechChip {
 			
 		});
 		
-		SpeechOn(); /* call speech_intr every 25 ms */
+		speechOn(); /* call speech_intr every 25 ms */
 		
 		speaking = true;
 		timeout = getNumberTimeoutFrames();
@@ -598,7 +598,7 @@ public class SpeechTMS5220 implements ISpeechChip {
 		// SPEECHPLAY(vms_Speech, NULL, 0L, speech_hertz);
 	}
 
-	private synchronized void SpeechOn() {
+	private synchronized void speechOn() {
 		speechOn = true;
 		//machine.getFastMachineTimer().scheduleTask(speechTimerTask, speechHertz / speechLength);
 		speechTimer.scheduleTask(speechTimerTask, getSpeechRate());
@@ -713,7 +713,6 @@ public class SpeechTMS5220 implements ISpeechChip {
 	private synchronized void SpeechOff() {
 		speechOn = false;
 		speechTimer.cancelTask(speechTimerTask);
-		//machine.getFastMachineTimer().cancelTask(speechTimerTask);
 	}
 
 	public void addSpeechListener(ISpeechDataSender sender) {
