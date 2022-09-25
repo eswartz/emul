@@ -445,7 +445,7 @@ public class OpenLPCEngine implements ILPCEngine {
 						pitchctr--;
 					}
 				} else {
-					u = pitchctr < RomTables.chirptable.length ? RomTables.chirptable[pitchctr]
+					u = pitchctr < RomTables.chirptable.length ? (RomTables.chirptable[pitchctr] & 0xff)
 							* NewG / 128
 							: 0;
 					pitchctr = ((pitchctr + 1) % (int) Newper);

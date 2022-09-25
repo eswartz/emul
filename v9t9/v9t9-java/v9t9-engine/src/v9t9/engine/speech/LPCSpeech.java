@@ -131,11 +131,11 @@ final static int FL_last	= 8;
 		int         x;
 	
 		if (0 == (decode & FL_nointerp)) {
-			oldParams.energy += (params.energy - oldParams.energy) / (4+RomTables.interp_coeff[period]);
+			oldParams.energy += (params.energy - oldParams.energy) / (RomTables.interp_coeff[period]);
 			if (oldParams.pitch != 0)
-				oldParams.pitch += (params.pitch - oldParams.pitch) / (4+RomTables.interp_coeff[period]);
+				oldParams.pitch += (params.pitch - oldParams.pitch) / (RomTables.interp_coeff[period]);
 			for (x = 0; x < 10; x++)
-				oldParams.kVal[x] += (params.kVal[x] - oldParams.kVal[x]) / (4+RomTables.interp_coeff[period]);
+				oldParams.kVal[x] += (params.kVal[x] - oldParams.kVal[x]) / (RomTables.interp_coeff[period]);
 		}
 	}
 
@@ -183,7 +183,7 @@ final static int FL_last	= 8;
 			} else {
 				/* get next chirp value */
 				int ppidx = ppctr;
-				U = ppidx < RomTables.chirptable.length ? RomTables.chirptable[ppidx] * oldParams.energy / 256 : 0;
+				U = ppidx < RomTables.chirptable.length ? (RomTables.chirptable[ppidx] & 0xff) * oldParams.energy / 256 : 0;
 
 				if (oldParams.pitch != 0) 
 					ppctr = (ppctr + 1) % (oldParams.pitch);
@@ -309,8 +309,10 @@ final static int FL_last	= 8;
 				params.kVal[0] = getNumber(RomTables.k1table[params.kParam[0]]);
 				params.kVal[1] = getNumber(RomTables.k2table[params.kParam[1]]);
 				params.kVal[2] = getNumber(RomTables.k3table[params.kParam[2]]);
-				params.kVal[3] = getNumber(RomTables.k4table[params.kParam[3]]);
-//				params.kVal[3] = getNumber(RomTables.k3table[params.kParam[3]]);	// bug in pre-TMS5220, according to MAME... 
+				
+				// bug in pre-TMS5220, according to MAME... (helps with "BULLETIN")
+//				params.kVal[3] = getNumber(RomTables.k4table[params.kParam[3]]);
+				params.kVal[3] = getNumber(RomTables.k3table[params.kParam[3]]);	 
 
 				if (!params.isUnvoiced()) {	/* unvoiced? */
 					params.kVal[4] = getNumber(RomTables.k5table[params.kParam[4]]);
