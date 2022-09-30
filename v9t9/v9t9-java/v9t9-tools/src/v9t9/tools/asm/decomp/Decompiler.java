@@ -26,8 +26,8 @@ import v9t9.common.memory.IMemory;
 import v9t9.common.memory.IMemoryDomain;
 import v9t9.engine.memory.MemoryEntry;
 import v9t9.engine.memory.NativeFileMemoryEntry;
-import v9t9.machine.ti99.asm.HighLevelCodeInfo;
-import v9t9.machine.ti99.asm.TopDownPhase;
+import v9t9.machine.ti99.asm.HighLevelCodeInfo9900;
+import v9t9.machine.ti99.asm.TopDownPhase9900;
 import ejs.base.utils.HexUtils;
 
 /**
@@ -37,7 +37,7 @@ import ejs.base.utils.HexUtils;
 public class Decompiler implements ICodeProvider {
 
 	protected DecompileOptions options;
-	protected HighLevelCodeInfo highLevel;
+	protected HighLevelCodeInfo9900 highLevel;
 	protected ICpuState state;
 	private IMemory memory;
 	private IMemoryDomain consoleMemory;
@@ -52,7 +52,7 @@ public class Decompiler implements ICodeProvider {
 		options = new DecompileOptions();
 		this.memory = machine.getMemory(); 
 		consoleMemory = memory.getDomain(IMemoryDomain.NAME_CPU);
-		highLevel = new HighLevelCodeInfo(state, instructionFactory);
+		highLevel = new HighLevelCodeInfo9900(state, instructionFactory);
 	}
 
 	public void addRangeFromArgv(String string, boolean isCode)
@@ -84,7 +84,7 @@ public class Decompiler implements ICodeProvider {
 
 	public IDecompilePhase decompile() {
 		//FullSweepPhase llp = new FullSweepPhase(state, highLevel);
-	    TopDownPhase llp = new TopDownPhase(state, highLevel);
+	    TopDownPhase9900 llp = new TopDownPhase9900(state, highLevel);
 	    llp.addRefDefTables(getOptions().refDefTables);
 	    llp.disassemble();
 	    llp.run();
@@ -103,7 +103,7 @@ public class Decompiler implements ICodeProvider {
 	/**
 	 * @return the highLevel
 	 */
-	public HighLevelCodeInfo getHighLevel() {
+	public HighLevelCodeInfo9900 getHighLevel() {
 		return highLevel;
 	}
 

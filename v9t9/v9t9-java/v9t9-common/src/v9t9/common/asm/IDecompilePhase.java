@@ -40,11 +40,11 @@ public interface IDecompilePhase {
 	    }
 	
 	    public void addInstruction(LLInstruction inst) {
-	        instructionMap.put(new Integer(inst.pc), inst);
+	        instructionMap.put(Integer.valueOf(inst.pc), inst);
 	    }
 	
 	    public LLInstruction getInstruction(int addr) {
-	        return instructionMap.get(new Integer(addr));
+	        return instructionMap.get(Integer.valueOf(addr));
 	    }
 	
 	    public Iterator<LLInstruction> instructionIterator() {

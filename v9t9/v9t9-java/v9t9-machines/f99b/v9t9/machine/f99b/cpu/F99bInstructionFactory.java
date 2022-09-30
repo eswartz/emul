@@ -47,31 +47,6 @@ import v9t9.machine.f99b.asm.MachineOperandF99b;
 public class F99bInstructionFactory implements IRawInstructionFactory {
 	public static final F99bInstructionFactory INSTANCE = new F99bInstructionFactory();
 	
-	static class WorkBlock {
-		public short pc;
-		
-		public IMemoryDomain domain;
-		
-		
-		public WorkBlock(short pc, IMemoryDomain domain) {
-			super();
-			this.pc = pc;
-			this.domain = domain;
-		}
-		/**
-		 * @return
-		 */
-		public int nextByte() {
-			return domain.readByte(pc++) & 0xff;
-		}
-		/**
-		 * @return
-		 */
-		public int nextWord() {
-			return (domain.readByte(pc++) << 8) | domain.readByte(pc++) & 0xff;
-		}
-	}
-		
 	/* (non-Javadoc)
 	 * @see v9t9.tools.asm.assembler.IInstructionFactory#decodeInstruction(int, v9t9.engine.memory.MemoryDomain)
 	 */

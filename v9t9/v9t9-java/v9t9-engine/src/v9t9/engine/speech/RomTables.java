@@ -17,14 +17,30 @@ package v9t9.engine.speech;
  */
 public class RomTables {
 	/* TMS5220 ROM Tables */
+	
 
+	final static public int energytablex[] = {
+			0, 52, 87, 123, 174, 246, 348, 491,
+			694, 981, 1385, 1957, 2764, 3904, 5514, 7789
+	};
+	
 	/* This is the energy lookup table (4-bits -> 10-bits) */
-
 	final static public short energytable[] = {
 		0x0000, 0x00C0, 0x0140, 0x01C0, 0x0280, 0x0380, 0x0500, 0x0740,
 		0x0A00, 0x0E40, 0x1440, 0x1C80, 0x2840, 0x38C0, 0x5040, 0x7FC0
 	};
 
+	final static public int pitchtablex[] = {
+		0, 15, 16, 17, 18, 19, 20, 21,
+		22, 23, 24, 25, 26, 27, 28, 29,
+		30, 31, 32, 33, 34, 35, 36, 37,
+		38, 39, 40, 41, 42, 44, 46, 48, 
+		50, 52, 53, 56, 58, 60, 62, 65,
+		68, 70, 72, 76, 78, 80, 84, 86,
+		91, 94, 98, 101, 105, 109, 114, 118,
+		112, 127, 132, 137, 142, 148, 153, 159,
+	};
+	
 	/* This is the pitch lookup table (6-bits -> 8-bits) */
 
 	final static public int pitchtable[] = {
@@ -43,6 +59,17 @@ public class RomTables {
 
 	/* K1 is (5-bits -> 9 bits+sign, 2's comp. fractional (-1 < x < 1) */
 
+	final static public double k1tablef[] = {
+			-0.97850, -0.97270, -0.97070, -0.96680,
+			-0.96290, -0.95900, -0.95310, -0.94140,
+			-0.93360, -0.92580, -0.91600, -0.90620,
+			-0.89650, -0.88280, -0.86910, -0.85350,
+			-0.80420, -0.74058, -0.66019, -0.56116,
+			-0.44296, -0.30706, -0.15735, -0.00005,
+			0.15725, 0.30696, 0.44288, 0.56109,
+			0.66013, 0.74054, 0.80416, 0.85350,
+	};
+	
 	final static public short k1table[] = {
 
 		(short) 0x82C0, (short) 0x8380, (short) 0x83C0, (short) 0x8440,
@@ -55,9 +82,18 @@ public class RomTables {
 	};
 
 	/* K2 is (5-bits -> 9 bits+sign, 2's comp. fractional (-1 < x < 1) */
-
+	final static public double k2tablef[] = {
+			-0.64000, -0.58999, -0.53500, -0.47507,
+			-0.47507, -0.41039, -0.34129, -0.26830, 
+			-0.19209, -0.11350, -0.03345, 0.04802, 
+			0.12690, 0.20515, 0.28087, 0.35325, 
+			0.42163, 0.54464, 0.59878, 0.64796,
+			0.69227, 0.73190, 0.76714, 0.79828,
+			0.82567, 0.84695, 0.87057, 0.88875,
+			0.90451, 0.91813, 0.92988, 0.98830,
+	
+	};
 	final static public short k2table[] = {
-
 		(short) 0xAE00, (short) 0xB480, (short) 0xBB80, (short) 0xC340,
 		(short) 0xCB80, (short) 0xD440, (short) 0xDDC0, (short) 0xE780,
 		(short) 0xF180, (short) 0xFBC0, 0x0600, 0x1040, 0x1A40, 0x2400, 0x2D40,
@@ -66,6 +102,13 @@ public class RomTables {
 		0x69C0, 0x6CC0, 0x6F80, 0x71C0, 0x73C0, 0x7580, 0x7700, 0x7E80
 	};
 
+	final static public double k3tablef[] = {
+			-0.64000, -0.53145, -0.42289, -0.31434,
+			-0.20579, -0.09723, 0.01132, 0.11987,
+			0.22843, 0.33698, 0.44553, 0.55409,
+			0.66264, 0.77119, 0.87975, 0.98830
+
+	};
 	/* K3 is (4-bits -> 9 bits+sign, 2's comp. fractional (-1 < x < 1) */
 
 	final static public short k3table[] = {
@@ -163,5 +206,34 @@ public class RomTables {
 		k1table, k2table, k3table, /*k4table*/ k3table, k5table, k6table,
 		k7table, k8table, k9table, k10table
 	};
+
+	static {
+		
+		for (int i = 0; i < pitchtable.length; i++) {
+			short nv = (short) (pitchtablex[i] << 8);
+			pitchtable[i] = nv; 
+		}
+		
+		for (int i = 0; i < energytable.length; i++) {
+			short nv = (short) (energytablex[i] << 4);
+			energytable[i] = nv; 
+		}
+		
+		for (int i = 0; i < k1table.length; i++) {
+			short nv = (short) Math.round(k1tablef[i] * 0x7fff);
+			k1table[i] = nv; 
+		}
+		
+		for (int i = 0; i < k2table.length; i++) {
+			short nv = (short) Math.round(k2tablef[i] * 0x7fff);
+			k2table[i] = nv; 
+		}
+		
+		for (int i = 0; i < k3table.length; i++) {
+			short nv = (short) Math.round(k3tablef[i] * 0x7fff);
+			k3table[i] = nv; 
+		}
+	}
+
 
 }

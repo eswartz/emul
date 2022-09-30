@@ -26,10 +26,10 @@ import v9t9.engine.Dumper;
 import v9t9.engine.compiler.CodeBlockCompilerStrategy;
 import v9t9.engine.cpu.CpuBase;
 import v9t9.engine.cpu.Executor;
-import v9t9.machine.ti99.asm.HighLevelCodeInfo;
+import v9t9.machine.ti99.asm.HighLevelCodeInfo9900;
 import v9t9.machine.ti99.asm.InstructionFactory9900;
 import v9t9.machine.ti99.asm.RawInstructionFactory9900;
-import v9t9.machine.ti99.asm.TopDownPhase;
+import v9t9.machine.ti99.asm.TopDownPhase9900;
 import v9t9.machine.ti99.compiler.Compiler9900;
 import v9t9.machine.ti99.interpreter.Interpreter9900;
 import ejs.base.properties.IProperty;
@@ -375,7 +375,7 @@ public class Cpu9900 extends CpuBase {
 	 */
 	@Override
 	public IDecompilePhase createDecompiler() {
-		return new TopDownPhase(getState(), new HighLevelCodeInfo(getState(), 
+		return new TopDownPhase9900(getState(), new HighLevelCodeInfo9900(getState(), 
 				new InstructionFactory9900()));
 	}
 	

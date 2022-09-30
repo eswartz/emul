@@ -47,9 +47,12 @@ public class DecodedTableLabelProvider extends BaseLabelProvider implements
 	public String getColumnText(Object element, int columnIndex) {
 		DecodedRow row = (DecodedRow) element;
 		IDecodedContent content = row.getContent();
-		if (columnIndex == 0)
+		switch (columnIndex) {
+		case 0:
+			return content.getSymbol();
+		case 1:
 			 return HexUtils.toHex4(content.getAddr());
-		if (columnIndex == 1) {
+		case 2: {
 			StringBuilder sb = new StringBuilder();
 			for (int i = 0; i < content.getSize(); i++) {
 				if (i > 0 && i % chunkSize == 0)
@@ -59,7 +62,9 @@ public class DecodedTableLabelProvider extends BaseLabelProvider implements
 			}
 			return sb.toString();
 		}
-		return contentLabelProvider.getText(content);
+		default:
+			return contentLabelProvider.getText(content);
+		}
 	}
 
 	/* (non-Javadoc)

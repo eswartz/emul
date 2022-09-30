@@ -71,7 +71,7 @@ public interface IHighLevelInstruction {
 	 */
 	IHighLevelInstruction getPhysicalPrev();
 
-	/** Get the instruction that precedes this one in PC order (not necessarily execution order).
+	/** Get the instruction that dollows this one in PC order (not necessarily execution order).
 	 * Its {@link #getInst()} will have the PC of this one's PC plus the receiver's size.
 	 * @return
 	 */

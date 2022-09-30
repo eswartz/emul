@@ -50,7 +50,7 @@ public interface ISpeechChip extends IPersistable {
 	SettingSchema settingLogSpeech = new SettingSchema(
 			ISettingsHandler.TRANSIENT,
 			"LogSpeech",
-			new Integer(0));
+			Integer.valueOf(0));
 			
 	/**
 	 * Read the next byte from memory 

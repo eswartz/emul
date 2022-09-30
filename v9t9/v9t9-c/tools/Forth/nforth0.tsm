@@ -49,7 +49,7 @@ int1v	dw	intws,INT1PC
 	db		>30,>AA
 
 INT0PC:
-	bl		@BANK
+	bl		@bankA
 	dw		0
  	; notreached
 	nop
@@ -57,7 +57,7 @@ INT0PC:
 
 INT1PC:
 	limi	0
-	bl		@BANK
+	bl		@bankA
 	dw		int1flag
  	; notreached
 	nop
@@ -67,7 +67,7 @@ XOP1PC:
 	limi	0
 	mov		*14+,1		; code
 	mov		11,0
-	bl		@BANK
+	bl		@bankA
 	dw		xop1flag
  	; notreached
 	nop
@@ -82,8 +82,6 @@ xop1v	dw 	xopws,XOP1PC
 forth_start dw COMMON_END
 
 	;	in other bank, this branches to real ROM
-
-BANK:
 
 bankA:
 	szc		*11+,@intsfromA

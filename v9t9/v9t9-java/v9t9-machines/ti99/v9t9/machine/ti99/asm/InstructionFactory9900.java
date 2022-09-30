@@ -71,7 +71,7 @@ public class InstructionFactory9900 implements IInstructionFactory {
 
 	@Override
 	public IDecompileInfo createDecompileInfo(ICpuState cpuState) {
-		return new HighLevelCodeInfo(cpuState, this);
+		return new HighLevelCodeInfo9900(cpuState, this);
 	}
 
 }

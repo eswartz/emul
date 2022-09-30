@@ -22,16 +22,16 @@ import v9t9.common.asm.Routine;
 import v9t9.common.memory.IMemoryDomain;
 import v9t9.engine.memory.MemoryEntry;
 import v9t9.engine.memory.StockRamArea;
-import v9t9.machine.ti99.asm.HighLevelCodeInfo;
+import v9t9.machine.ti99.asm.HighLevelCodeInfo9900;
 import v9t9.machine.ti99.asm.InstructionFactory9900;
-import v9t9.machine.ti99.asm.Phase;
+import v9t9.machine.ti99.asm.Phase9900;
 import v9t9.machine.ti99.cpu.CpuState9900;
 import v9t9.tools.asm.ParseException;
 import v9t9.tools.asm.inst9900.AsmInstructionFactory9900;
 
 public abstract class BaseTopDownPhaseTest9900 extends BaseTest9900 implements ICodeProvider
 {
-	protected HighLevelCodeInfo highLevel;
+	protected HighLevelCodeInfo9900 highLevel;
 	protected IDecompileInfo decompileInfo;
 	protected CpuState9900 state;
     
@@ -48,7 +48,7 @@ public abstract class BaseTopDownPhaseTest9900 extends BaseTest9900 implements I
                 new StockRamArea(0x400)
                 ));
         state = new CpuState9900(CPU);
-        highLevel = new HighLevelCodeInfo(state, AsmInstructionFactory9900.INSTANCE);
+        highLevel = new HighLevelCodeInfo9900(state, AsmInstructionFactory9900.INSTANCE);
         highLevel.getMemoryRanges().addRange(0, 0x2000, true);
         highLevel.getMemoryRanges().addRange(0x8300, 0x100, true);
         
@@ -68,7 +68,7 @@ public abstract class BaseTopDownPhaseTest9900 extends BaseTest9900 implements I
 	    		cpu.flatWriteByte(pc++, bytes[l]);
 	    	
 	    	/*
-	    	highLevel.getLLInstructions().put(new Integer(inst.pc), hinst);
+	    	highLevel.getLLInstructions().put(Integer.valueOf(inst.pc), hinst);
 	    	highLevel.addInstruction(hinst);
 	        cpu.flatWriteWord(pc, (short) inst.opcode);
 	        if (inst.getInst() != InstTableCommon.Idata) {
@@ -94,7 +94,7 @@ public abstract class BaseTopDownPhaseTest9900 extends BaseTest9900 implements I
 	    
 	    decompileInfo.getMemoryRanges().clear();
 	    decompileInfo.getMemoryRanges().addRange(startPc, pc - startPc, true);
-	    new Phase(state, decompileInfo) {
+	    new Phase9900(state, decompileInfo) {
 	    	/* (non-Javadoc)
 	    	 * @see v9t9.common.asm.IDecompilePhase#run()
 	    	 */

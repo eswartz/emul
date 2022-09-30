@@ -31,8 +31,14 @@ import v9t9.engine.compiler.NullCompilerStrategy;
 import v9t9.engine.cpu.CpuBase;
 import v9t9.engine.cpu.Executor;
 import v9t9.machine.f99b.asm.ChangeBlockF99b;
+import v9t9.machine.f99b.asm.HighLevelCodeInfoF99b;
+import v9t9.machine.f99b.asm.InstructionFactoryF99b;
 import v9t9.machine.f99b.asm.StatusF99b;
+import v9t9.machine.f99b.asm.TopDownPhaseF99b;
 import v9t9.machine.f99b.interpreter.InterpreterF99b;
+import v9t9.machine.ti99.asm.HighLevelCodeInfo9900;
+import v9t9.machine.ti99.asm.InstructionFactory9900;
+import v9t9.machine.ti99.asm.TopDownPhase9900;
 import v9t9.machine.ti99.machine.InternalCruF99;
 
 /**
@@ -475,7 +481,8 @@ public class CpuF99b extends CpuBase {
 	 */
 	@Override
 	public IDecompilePhase createDecompiler() {
-		return null;
+		return new TopDownPhaseF99b(getState(), new HighLevelCodeInfoF99b(getState(), 
+				new InstructionFactoryF99b()));
 	}
 	
 	/* (non-Javadoc)
@@ -492,6 +499,4 @@ public class CpuF99b extends CpuBase {
 			return new ChangeBlockF99b(this, pc);
 		}
 	}
-
-	
 }

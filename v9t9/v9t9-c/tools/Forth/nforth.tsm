@@ -133,8 +133,6 @@ xop1v	dw	xopws,XOP1PC			; vector for XOP 1
 	data	0					; forth_start
 
 
-BANK:
-
 bankA:
 	soc		*11+,@intsfromA
 	seto	@ROMBANK

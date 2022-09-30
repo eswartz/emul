@@ -176,8 +176,7 @@ public class LPCSpeech {
 					ns2++;
 			} else {
 				/* get next chirp value */
-				int ppidx = ppctr;
-				U = (RomTables.chirptable[Math.min(ppidx, RomTables.chirptable.length - 1)]) << 8;
+				U = (RomTables.chirptable[Math.min(ppctr, RomTables.chirptable.length - 1)]) << 8;
 
 				if (oldParams.pitch != 0)
 					ppctr = (ppctr + 1) % oldParams.pitch;
@@ -348,8 +347,17 @@ public class LPCSpeech {
 	}
 
 	private short getNumber(short s) {
+//		return reverseWord((short) (s >> 4));
 		return s;
 	}
+
+//	private short reverseWord(short b) {
+//		short o = 0;
+//		for (int i = 0; i < 16; ++i) {
+//			o |= (b & (1 << i)) != 0 ? (0x8000 >> i) : 0;
+//		}
+//		return o;
+//	}
 
 	/**
 	 * @param pitchVal

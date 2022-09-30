@@ -93,7 +93,6 @@ public class MemoryViewer extends Composite implements IPersistable, ICpuTracker
 	private TableViewer byteTableViewer;
 	private TableViewer decodedTableViewer;
 	
-	
 	private ComboViewer entryViewer;
 	private final IMemory memory;
 	protected MemoryRange currentRange;
@@ -441,41 +440,41 @@ public class MemoryViewer extends Composite implements IPersistable, ICpuTracker
 		final Table table = decodedTableViewer.getTable();
 		//GridDataFactory.fillDefaults().grab(true, true).span(2, 1).applyTo(table);
 		
-		String[] props = new String[3];
-		props[0] = "Addr";
+		String[] props = new String[4];
+		props[0] = "Symbol";
 		new TableColumn(table, SWT.LEFT).setText(props[0]);
-		props[1] = "Memory";
+		props[1] = "Addr";
 		new TableColumn(table, SWT.LEFT).setText(props[1]);
-		props[2] = "Content";
+		props[2] = "Memory";
 		new TableColumn(table, SWT.LEFT).setText(props[2]);
+		props[3] = "Content";
+		new TableColumn(table, SWT.LEFT).setText(props[3]);
 		
 		GC gc = new GC(table);
 		gc.setFont(tableFont);
 		int width = gc.stringExtent("FFFF").x;
 		gc.dispose();
 		
-		table.getColumn(0).setWidth(width);
-		table.getColumn(1).setWidth(width * 4);
+		table.getColumn(0).setWidth(width * 2);
+		table.getColumn(1).setWidth(width);
+		table.getColumn(2).setWidth(width);
+		table.getColumn(3).setWidth(width * 4);
 		
 		table.getColumn(0).pack();
 		table.getColumn(1).pack();
+		table.getColumn(2).pack();
 		
 		table.addControlListener(new ControlAdapter() {
 			@Override
 			public void controlResized(ControlEvent e) {
-				table.getColumn(2).setWidth(table.getSize().x - table.getColumn(0).getWidth() - table.getColumn(1).getWidth());				
+				table.getColumn(3).setWidth(table.getSize().x - table.getColumn(0).getWidth() - table.getColumn(1).getWidth() - table.getColumn(2).getWidth());				
 			}
 		});
 		
-		//for (TableColumn column : table.getColumns()) {
-		//	column.pack();
-		//}
 		table.setHeaderVisible(true);
 		table.setLinesVisible(true);
 		
 		decodedTableViewer.setColumnProperties(props);
-		//byteTableViewer.setCellModifier(new ByteMemoryCellModifier(byteTableViewer));
-		//byteTableViewer.setCellEditors(editors);
 
 		table.addMenuDetectListener(new MenuDetectListener() {
 			
@@ -762,10 +761,6 @@ public class MemoryViewer extends Composite implements IPersistable, ICpuTracker
 			decodeMemory = false;
 			tableLayout.topControl = byteTableViewer.getControl();
 			tableComposite.layout(true);
-//			decodedTableViewer.setLabelProvider(byteMemoryLabelProvider);
-//			decodedTableViewer.setContentProvider(byteContentViewer);
-//			decodedTableViewer.setInput(range);
-//			decodedTableViewer.refresh(true);
 			return;
 
 		}

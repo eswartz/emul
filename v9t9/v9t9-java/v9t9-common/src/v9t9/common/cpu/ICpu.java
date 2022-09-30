@@ -37,7 +37,7 @@ public interface ICpu extends IPersistable {
 			"RealTime", Boolean.TRUE);
 	SettingSchema settingCyclesPerSecond = new SettingSchema(
 			ISettingsHandler.MACHINE,
-			"CyclesPerSecond", new Integer(0));
+			"CyclesPerSecond", Integer.valueOf(0));
 
 	SettingSchema settingDebugging = new SettingSchema(
 			ISettingsHandler.TRANSIENT,
@@ -49,7 +49,7 @@ public interface ICpu extends IPersistable {
 
 	SettingSchema settingRunForCount = new SettingSchema(
 			ISettingsHandler.TRANSIENT,
-			"RunForCount", new Integer(0));
+			"RunForCount", Integer.valueOf(0));
 	SettingSchema settingTestSuccessSymbol = new SettingSchema(
 			ISettingsHandler.TRANSIENT,
 			"TestSuccessSymbol", "");

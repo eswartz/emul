@@ -14,12 +14,12 @@ import java.util.Collection;
 
 import v9t9.common.asm.Block;
 import v9t9.common.asm.Routine;
-import v9t9.machine.ti99.asm.TopDownPhase;
+import v9t9.machine.ti99.asm.TopDownPhase9900;
 import v9t9.tools.asm.ParseException;
 
 public class BaseTopDownTest9900 extends BaseTopDownPhaseTest9900 {
 
-	protected TopDownPhase phase;
+	protected TopDownPhase9900 phase;
 
 	public BaseTopDownTest9900() {
 		super();
@@ -28,7 +28,7 @@ public class BaseTopDownTest9900 extends BaseTopDownPhaseTest9900 {
 	@Override
 	protected void setUp() throws Exception {
 	    super.setUp();
-	    phase = new TopDownPhase(state, decompileInfo);
+	    phase = new TopDownPhase9900(state, decompileInfo);
 	    System.out.println("==============");
 	}
 

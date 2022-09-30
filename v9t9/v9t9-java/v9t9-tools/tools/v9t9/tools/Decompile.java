@@ -121,7 +121,7 @@ public class Decompile {
                 break;
             case 's': {
                 int addr = HexUtils.parseHexInt(getopt.getOptarg());
-                refDefTables.add(new Integer(addr));
+                refDefTables.add(Integer.valueOf(addr));
                 break;
             }
             default:

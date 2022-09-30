@@ -48,8 +48,8 @@ public class Block implements Comparable<Block>, Iterable<IHighLevelInstruction>
     	this.id = nextId++;
         succ = new ArrayList<Block>(2);
         pred = new ArrayList<Block>(2);
-        if (inst.getInst().getInst() == InstTableCommon.Idata)
-        	throw new IllegalArgumentException();
+//        if (inst.getInst().getInst() == InstTableCommon.Idata)
+//        	throw new IllegalArgumentException();
         this.first = inst;
         this.last = inst;
         this.first.setBlock(this);

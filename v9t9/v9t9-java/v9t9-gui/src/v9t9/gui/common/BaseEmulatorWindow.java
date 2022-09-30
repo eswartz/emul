@@ -43,7 +43,7 @@ public abstract class BaseEmulatorWindow {
 			"MonitorEffect", "");
 	static public final SettingSchema settingZoomLevel = new SettingSchema(
 			ISettingsHandler.MACHINE,
-			"ZoomLevel", new Integer(3));
+			"ZoomLevel", Integer.valueOf(3));
 	static public final SettingSchema settingFullScreen = new SettingSchema(
 			ISettingsHandler.MACHINE,
 			"FullScreen", Boolean.FALSE);

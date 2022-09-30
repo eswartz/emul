@@ -31,7 +31,7 @@ public interface ISoundHandler {
 			"PlaySound", Boolean.TRUE);
 	SettingSchema settingSoundVolume = new SettingSchema(
 			ISettingsHandler.MACHINE,
-			"SoundVolume", new Integer(5));
+			"SoundVolume", Integer.valueOf(5));
 	SettingSchema settingRecordSoundOutputFile = new SettingSchema(
 			ISettingsHandler.TRANSIENT,
 			"RecordSoundOutputFile", String.class, null);

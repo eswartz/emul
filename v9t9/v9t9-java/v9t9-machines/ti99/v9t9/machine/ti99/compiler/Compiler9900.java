@@ -384,7 +384,7 @@ public class Compiler9900 extends CompilerBase {
         if (instSet == null) {
 			instSet = new java.util.HashSet<Integer>();
 		}
-        Integer instInt = new Integer(ins.getInst());
+        Integer instInt = Integer.valueOf(ins.getInst());
         if (!instSet.contains(instInt)) {
             System.out.println("first use of " + 
             		InstTable9900.getInstName(ins.getInst()) +

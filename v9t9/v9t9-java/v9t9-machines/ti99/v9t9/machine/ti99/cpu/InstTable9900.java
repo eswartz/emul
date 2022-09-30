@@ -756,7 +756,7 @@ public class InstTable9900 {
 	static { registerAlias(Inst9900.Ijoc, "jc"); }
 
 	public static void registerAlias(int inst, String str) {
-	    Integer i = new Integer(inst);
+	    Integer i = Integer.valueOf(inst);
 	    nameToInst.put(str.toUpperCase(), i);
 	}
 	/**

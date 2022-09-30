@@ -1,14 +1,14 @@
 /*
-  BasePhase.java
+  Phase.java
 
-  (c) 2008-2013 Edward Swartz
+  (c) 2022 Edward Swartz
 
   All rights reserved. This program and the accompanying materials
   are made available under the terms of the Eclipse Public License v1.0
   which accompanies this distribution, and is available at
   http://www.eclipse.org/legal/epl-v10.html
  */
-package v9t9.common.asm;
+package v9t9.machine.f99b.asm;
 
 import java.io.PrintStream;
 import java.util.ArrayList;
@@ -20,24 +20,28 @@ import java.util.Set;
 import java.util.TreeSet;
 
 import ejs.base.utils.Check;
-
+import v9t9.common.asm.Block;
+import v9t9.common.asm.IDecompileInfo;
+import v9t9.common.asm.IDecompilePhase;
+import v9t9.common.asm.IHighLevelInstruction;
+import v9t9.common.asm.IMachineOperand;
+import v9t9.common.asm.Label;
+import v9t9.common.asm.MemoryRange;
+import v9t9.common.asm.RawInstruction;
+import v9t9.common.asm.Routine;
 import v9t9.common.cpu.ICpuState;
 import v9t9.common.memory.IMemoryDomain;
+import v9t9.machine.ti99.cpu.MachineOperand9900;
 
-/**
- * @author ejs
- *
- */
-public abstract class BasePhase {
-
+public abstract class PhaseF99b implements IDecompilePhase {
 	protected Map<Integer, Block> blocks;
 	protected IMemoryDomain mainMemory;
 	public IDecompileInfo decompileInfo;
 	protected Map<Block, Label> labels;
 	protected Map<Label, Routine> routines;
-	protected ICpuState state;
-
-	public BasePhase(ICpuState state, IDecompileInfo info) {
+	private ICpuState state;
+	
+	public PhaseF99b(ICpuState state, IDecompileInfo info) {
 		this.decompileInfo = info;
 		this.state = state;
 		this.mainMemory = state.getConsole();
@@ -53,16 +57,40 @@ public abstract class BasePhase {
 		//this.routines = info.getRoutines();
 		//routines = new TreeMap<Label, Routine>();
 	}
-	
 
+
+    /* (non-Javadoc)
+     * @see v9t9.common.asm.IDecompilePhase#getDecompileInfo()
+     */
+    @Override
+    public IDecompileInfo getDecompileInfo() {
+    	return decompileInfo;
+    	
+    }
+    
+	/* (non-Javadoc)
+	 * @see v9t9.common.asm.IDecompilePhase#reset()
+	 */
+	@Override
+	public void reset() {
+		decompileInfo.reset();
+		blocks.clear();
+		labels.clear();
+		routines.clear();
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.machine.ti99.asm.IDecompilePhase#getLabels()
+	 */
+	@Override
 	public Map<Block, Label> getLabels() {
 		return labels;
 	}
 
-	/**
-	 * Disassemble all the code.  Required after adding ranges.
-	 *
+	/* (non-Javadoc)
+	 * @see v9t9.machine.ti99.asm.IDecompilePhase#disassemble()
 	 */
+	@Override
 	public Collection<MemoryRange> disassemble() {
 		List<MemoryRange> ranges = new ArrayList<MemoryRange>();
 		MemoryRange prev = null;
@@ -79,28 +107,38 @@ public abstract class BasePhase {
 		}
 		return ranges;
 	}
-/*
- public MemoryDomain getCPUMemory() {
-        return CPU;
-    }
 
-    public void addInstruction(LLInstruction inst) {
-        instructionMap.put(Integer.valueOf(inst.pc), inst);
-    }
+	/* (non-Javadoc)
+	 * @see v9t9.machine.ti99.asm.IDecompilePhase#dumpInstructions(java.io.PrintStream)
+	 */
+	@Override
+	public void dumpInstructions(PrintStream os) {
+		for (Iterator<MemoryRange> iter = decompileInfo.getMemoryRanges().rangeIterator(); iter
+				.hasNext();) {
+			MemoryRange range = iter.next();
+			for (IHighLevelInstruction inst = (IHighLevelInstruction) range.getCode(); inst != null; 
+					inst = inst.getLogicalNext()) {
+				dumpInstruction(os, inst);
+			}
+		}
+	}
 
-    public LLInstruction getInstruction(int addr) {
-        return instructionMap.get(Integer.valueOf(addr));
-    }
+	/* (non-Javadoc)
+	 * @see v9t9.machine.ti99.asm.IDecompilePhase#dumpInstructions(java.io.PrintStream, java.util.Collection)
+	 */
+	@Override
+	public void dumpInstructions(PrintStream os, Collection<MemoryRange> ranges) {
+		for (MemoryRange range : ranges) {
+			for (IHighLevelInstruction inst = range.getCode(); inst != null; inst = inst.getLogicalNext()) {
+				dumpInstruction(os, inst);
+			}
+		}
+	}
 
-    public Iterator<LLInstruction> instructionIterator() {
-        return instructionMap.values().iterator();
-    }
-
-    public MemoryRanges getRanges() {
-        return ranges;
-    }
- */
-	
+	/* (non-Javadoc)
+	 * @see v9t9.machine.ti99.asm.IDecompilePhase#dumpInstruction(java.io.PrintStream, v9t9.common.asm.IHighLevelInstruction)
+	 */
+	@Override
 	public void dumpInstruction(PrintStream os, IHighLevelInstruction inst) {
 		if (inst.getBlock() != null && inst.getBlock().getFirst() == inst) {
 			os.println(inst.getBlock().format());
@@ -125,6 +163,10 @@ public abstract class BasePhase {
 		return null;
 	}
 
+	/* (non-Javadoc)
+	 * @see v9t9.machine.ti99.asm.IDecompilePhase#getLabel(int)
+	 */
+	@Override
 	public Label getLabel(int addr) {
 		Block block = getLabelKey(addr);
 		if (block == null)
@@ -133,34 +175,10 @@ public abstract class BasePhase {
 		return label;
 	}
 
-	/**
-	 * Add a label for the given address.
-	 * The label is created with the given parameters,
-	 * and a routine is realized by setting its label to this.
-	 * If a label already exists, an exception is emitted.
-	 * @param bufaddr
-	 * @param path
-	 * @param routine
-	 * @return
+	/* (non-Javadoc)
+	 * @see v9t9.machine.ti99.asm.IDecompilePhase#getRoutine(int)
 	 */
-	/*
-	public Label addLabel(int addr, boolean rel, int pc, String name) {
-		Integer key = getLabelKey(addr);
-		Label label = labels.get(key);
-		Check.checkArg(label == null);
-
-		
-		label = new Label((short) addr, name);
-		label.llll(null);
-		label.rel = rel;
-		label.rels = 0;
-		labels.put(key, label);
-
-		return label;
-	}
-*/
-
-
+	@Override
 	public Routine getRoutine(int addr) {
 		Label label = getLabel(addr);
 		if (label == null) {
@@ -169,18 +187,19 @@ public abstract class BasePhase {
 		return routines.get(label);
 	}
 
-	/**
-	 * Add a routine at the given address.  Any label already existing
-	 * here is renamed.
-	 * @param addr
-	 * @param name
-	 * @param routine
-	 * @return same incoming routine, updated with a label and added to the routines
+	/* (non-Javadoc)
+	 * @see v9t9.machine.ti99.asm.IDecompilePhase#addRoutine(int, java.lang.String, v9t9.common.asm.Routine)
 	 */
+	@Override
 	public Routine addRoutine(int addr, String name, Routine routine) {
 		Check.checkState(validCodeAddress(addr));
 		
 		Label label = decompileInfo.findOrCreateLabel(addr);
+		if (label.getAddr() != addr) {
+			// instr could be in the middle of valid instructions
+			return null;
+		}
+		
 		if (name != null && label.getName() == null) {
 			label.setName(name);
 		}
@@ -189,17 +208,17 @@ public abstract class BasePhase {
 		return routine;
 	}
 
-
-	public abstract int operandEffectiveAddress(IHighLevelInstruction inst, IMachineOperand mop);
+	public short operandJumpTarget(IHighLevelInstruction inst, IMachineOperand mop) {
+		return (short) (inst.getInst().getPc() + ((MachineOperand9900) mop).val);
+	}
 
 	public boolean operandIsLabel(IHighLevelInstruction inst, IMachineOperand mop) {
 		return mop.isLabel()
-				&& decompileInfo.getMemoryRanges().getRangeContaining(operandEffectiveAddress(
+				&& decompileInfo.getMemoryRanges().getRangeContaining(operandJumpTarget(
 						inst, mop)) != null;
 	}
 
-
-	public boolean validCodeAddress(int addr) {
+	protected boolean validCodeAddress(int addr) {
 		MemoryRange range = decompileInfo.getMemoryRanges().getRangeContaining(addr);
 		if (range == null) {
 			return false;
@@ -211,13 +230,13 @@ public abstract class BasePhase {
 		if (inst == null) {
 			return false;
 		}
-		if (inst.getInst() == InstTableCommon.Idata) {
-			return false;
-		}
 		return true;
 	}
 
-
+	/* (non-Javadoc)
+	 * @see v9t9.machine.ti99.asm.IDecompilePhase#dumpLabels(java.io.PrintStream)
+	 */
+	@Override
 	public void dumpLabels(PrintStream os) {
 		for (Object element : labels.values()) {
 			Label label = (Label) element;
@@ -225,6 +244,10 @@ public abstract class BasePhase {
 		}
 	}
 
+	/* (non-Javadoc)
+	 * @see v9t9.machine.ti99.asm.IDecompilePhase#dumpBlocks(java.io.PrintStream)
+	 */
+	@Override
 	public void dumpBlocks(PrintStream os) {
 		for (Object element : getBlocks()) {
 			Block block = (Block) element;
@@ -232,6 +255,10 @@ public abstract class BasePhase {
 		}
 	}
 
+	/* (non-Javadoc)
+	 * @see v9t9.machine.ti99.asm.IDecompilePhase#dumpRoutines(java.io.PrintStream)
+	 */
+	@Override
 	public void dumpRoutines(PrintStream os) {
 		for (Object element : getRoutines()) {
 			Routine routine = (Routine) element;
@@ -256,6 +283,10 @@ public abstract class BasePhase {
 		}
 	}
 
+	/* (non-Javadoc)
+	 * @see v9t9.machine.ti99.asm.IDecompilePhase#dumpBlock(java.io.PrintStream, v9t9.common.asm.Block)
+	 */
+	@Override
 	public void dumpBlock(PrintStream os, Block block) {
 		for (Iterator<IHighLevelInstruction> iter = block.iterator(); iter.hasNext();) {
 			IHighLevelInstruction inst = iter.next();
@@ -264,13 +295,25 @@ public abstract class BasePhase {
 		System.out.println();
 	}
 
+	/* (non-Javadoc)
+	 * @see v9t9.machine.ti99.asm.IDecompilePhase#addBlock(v9t9.common.asm.Block)
+	 */
+	@Override
 	public void addBlock(Block block) {
 		blocks.put(block.getFirst().getInst().pc, block);
 	}
+	/* (non-Javadoc)
+	 * @see v9t9.machine.ti99.asm.IDecompilePhase#getBlocks()
+	 */
+	@Override
 	public Set<Block> getBlocks() {
 		return new TreeSet<Block>(blocks.values());
 	}
 
+	/* (non-Javadoc)
+	 * @see v9t9.machine.ti99.asm.IDecompilePhase#getRoutines()
+	 */
+	@Override
 	public Collection<Routine> getRoutines() {
 		return routines.values();
 	}

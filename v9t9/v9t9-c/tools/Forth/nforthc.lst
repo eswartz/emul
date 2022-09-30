@@ -262,296 +262,295 @@
 131   >0044                   xop1v	dw	xopws,XOP1PC			; vector for XOP 1
       >0044=>FC40 >0026       
 133   >0048=>0000             	data	0					; forth_start
-136   >004A                   BANK:
-138   >004A                   bankA:
-139   >004A=>E83B >FB40       	soc		*11+,@intsfromA
-140   >004E=>0720 >FFC0       	seto	@ROMBANK
-141   >0052=>045B             	rt
-142   >0054                   bankB:
-143   >0054=>0720 >FFC2       	seto	@FTHBANK
-144   >0058=>045B             	rt
-146   >005A                   bankBrtwp:
-147   >005A=>06A0 >0054       	bl		@bankB
-148   >005E=>0380             	rtwp
-150   >0060                   FORTH_COLD:
-151   >0060=>06A0 >0054       	bl		@bankB
-152   >0064=>1000             	nop
-153   >0066=>1000             	nop
-155   >0068                   FORTH_QUIT:
-156   >0068=>06A0 >0054       	bl		@bankB
-157   >006C=>1000             	nop
-158   >006E=>1000             	nop
-161   >0070                   ABORT:
-162   >0070=>0300 >0000           limi    0
-163   >0074=>0720 >FB40           seto    @intsfromA
-165   >0078=>02E0 >FC00           lwpi    mainws
-166   >007C=>10F5                 jmp     FORTH_QUIT         ; ctrl+fctn+shift+space breaks
-167                               
-168   >007E                   COMMON_END:
-170   >007E                   bankrtwp:
-171   >007E=>C020 >FB40       	mov		@intsfromA,0
-172   >0082=>203B             	coc		*11+,0
-173   >0084=>16EA             	jne		bankBrtwp
-174   >0086=>0380             	rtwp
-211   >0088                   xop1list dw	xop1_restore_mode,xop1_key_avail,xop1_read_key,xop1_emit,xop1_emit_raw
+136   >004A                   bankA:
+137   >004A=>E83B >FB40       	soc		*11+,@intsfromA
+138   >004E=>0720 >FFC0       	seto	@ROMBANK
+139   >0052=>045B             	rt
+140   >0054                   bankB:
+141   >0054=>0720 >FFC2       	seto	@FTHBANK
+142   >0058=>045B             	rt
+144   >005A                   bankBrtwp:
+145   >005A=>06A0 >0054       	bl		@bankB
+146   >005E=>0380             	rtwp
+148   >0060                   FORTH_COLD:
+149   >0060=>06A0 >0054       	bl		@bankB
+150   >0064=>1000             	nop
+151   >0066=>1000             	nop
+153   >0068                   FORTH_QUIT:
+154   >0068=>06A0 >0054       	bl		@bankB
+155   >006C=>1000             	nop
+156   >006E=>1000             	nop
+159   >0070                   ABORT:
+160   >0070=>0300 >0000           limi    0
+161   >0074=>0720 >FB40           seto    @intsfromA
+163   >0078=>02E0 >FC00           lwpi    mainws
+164   >007C=>10F5                 jmp     FORTH_QUIT         ; ctrl+fctn+shift+space breaks
+165                               
+166   >007E                   COMMON_END:
+168   >007E                   bankrtwp:
+169   >007E=>C020 >FB40       	mov		@intsfromA,0
+170   >0082=>203B             	coc		*11+,0
+171   >0084=>16EA             	jne		bankBrtwp
+172   >0086=>0380             	rtwp
+209   >0088                   xop1list dw	xop1_restore_mode,xop1_key_avail,xop1_read_key,xop1_emit,xop1_emit_raw
       >0088=>00EA >00F0 >0108 
       >008E=>0110 >011A       
-212   >0092=>0122 >012A >0130 	dw		xop1_gotoxy,xop1_clear_window,xop1_set_window,xop1_get_window,xop1_set_mode
+210   >0092=>0122 >012A >0130 	dw		xop1_gotoxy,xop1_clear_window,xop1_set_window,xop1_get_window,xop1_set_mode
       >0098=>013C >0146       
-213   >009C=>014E >0156 >015C 	dw		xop1_set_fgbg,xop1_get_fgbg,xop1_draw_line,xop1_draw_pixel,xop1_reset_screen
+211   >009C=>014E >0156 >015C 	dw		xop1_set_fgbg,xop1_get_fgbg,xop1_draw_line,xop1_draw_pixel,xop1_reset_screen
       >00A2=>0162 >0168       
-214   >00A6=>0172 >017E >0186 	dw		xop1_set_vintflags,xop1_set_font,xop1_fill_rect,xop1_random,xop1_dsrlnk
+212   >00A6=>0172 >017E >0186 	dw		xop1_set_vintflags,xop1_set_font,xop1_fill_rect,xop1_random,xop1_dsrlnk
       >00AC=>018C >0194       
-215   >00B0=>019E >01A8 >01B4 	dw      xop1_get_vtab,xop1_set_vdpreg,xop1_get_vdpreg,xop1_set_vrwpage,xop1_set_vpage
+213   >00B0=>019E >01A8 >01B4 	dw      xop1_get_vtab,xop1_set_vdpreg,xop1_get_vdpreg,xop1_set_vrwpage,xop1_set_vpage
       >00B6=>01BE >01C6       
-216   >00BA=>01CE >01D4 >01E2 	dw      xop1_reset_palette,xop1_video_state,xop1_get_text_addr,xop1_get_xy,xop1_type
+214   >00BA=>01CE >01D4 >01E2 	dw      xop1_reset_palette,xop1_video_state,xop1_get_text_addr,xop1_get_xy,xop1_type
       >00C0=>01F2 >01F8       
-217   >00C4=>0202 >0208 >0210 	dw      xop1_rw_block,xop1_qtrack,xop1_draw_circle
-218   >00CA                   xop1last equ $
-224   >00CA                   xop1_real:
-225   >00CA=>C2AD >0014       	mov @SP+SP(13), SP			; stack ptr
-226   >00CE=>064A             	dect SP
-227   >00D0=>C68C             	mov 12 , *SP
-228   >00D2=>C30B             	mov 11 , 12				; copy op ptr
-230   >00D4=>0281 >0021       	ci	1,(xop1last - xop1list) / 2
-231   >00D8=>1204             	jle	xop1_pick
-232   >00DA                   xop1_out
-233   >00DA=>C33A             	mov *SP+, 12
-234   >00DC=>06A0 >007E       	bl	@bankrtwp
-235   >00E0=>0004             	data	xop1flag
-237   >00E2                   xop1_pick
-238   >00E2=>A041             	a	1,1
-239   >00E4=>C061 >0088       	mov	@xop1list(1),1
-240   >00E8=>0451             	b	*1
-242                               ;   0 = restore video mode (minimal)
-243   >00EA                   xop1_restore_mode
-244   >00EA=>06A0 >04A4       	bl @vrestoremode
-245   >00EE=>10F5             	jmp xop1_out
-246                           	
-247                           	;	1 = keyavail?
-248   >00F0                   xop1_key_avail 
-249   >00F0=>02E0 >FC60           lwpi    vidws
-250   >00F4=>06A0 >18BA           bl  @scankbd
-251   >00F8=>02E0 >FC40           lwpi    xopws
-252   >00FC=>06A0 >1A12       	bl	@kbdavail
-253   >0100=>04DC             	clr	*12
-254   >0102=>1301             	jeq xop1_1_out
-255   >0104=>071C             	seto *12
-256   >0106                   xop1_1_out
-257   >0106=>10E9             	jmp xop1_out
-259                           	;	2 = readkey
-260   >0108                   xop1_read_key	
-261   >0108=>06A0 >1A1A       	bl	@kbdread
-263   >010C=>C700             	mov	0,*12
-264   >010E=>10E5             	jmp xop1_out
-266                           	;	3 = emit (interpreted)
-267   >0110                   xop1_emit
-268   >0110=>D06C >0001       	movb   @1(12),1
-269   >0114=>06A0 >1C54       	bl     @emit
-270   >0118=>10E0             	jmp    xop1_out
-272                           	;	4 = emit, not interpreted
-273   >011A                   xop1_emit_raw
-274   >011A=>C05C             	mov    *12,1
-275   >011C=>06A0 >1AA8       	bl	    @printchar
-276   >0120=>10DC             	jmp    xop1_out
-278                           	; 	5 = gotoxy
-279   >0122                   xop1_gotoxy
-280   >0122=>C01C             	mov *12,0		; hi=x, lo=y
-281   >0124=>06A0 >1AD2       	bl @gotoxy
-282   >0128=>10D8             	jmp xop1_out
-284                           	;	6 = cls (window)
-285   >012A                   xop1_clear_window
-286   >012A=>06A0 >1B32           bl @termclear
-287   >012E=>10D5             	jmp xop1_out
-289                           	;	7 = text window
-290                           	;	
-291   >0130                   xop1_set_window
-292   >0130=>C01C             	mov *12, 0
-293   >0132=>C06C >0002       	mov @2(12), 1
-294   >0136=>06A0 >1A54       	bl @window
-295   >013A=>10CF             	jmp xop1_out
-297                           	;	8 = report text window
-298   >013C                   xop1_get_window
-299   >013C=>CF20 >F7C2       	mov @vwx, *12+
-300   >0140=>CF20 >F7C4       	mov @vwxs, *12+
-301   >0144=>10CA             	jmp xop1_out
-303                           	;	9 = graphics mode (ONLY)
-304   >0146                   xop1_set_mode
-305   >0146=>C05C             	mov *12, 1
-306   >0148=>0420 >0750       	blwp @vsetmode
-307   >014C=>10C6             	jmp xop1_out
-309                           	;	10 = set colors
-310   >014E                   xop1_set_fgbg:
-311   >014E=>C01C             	mov *12, 0
-312   >0150=>06A0 >036C       	bl @vsetcolor
-313   >0154=>10C2             	jmp xop1_out
-315                           	;	11 = get colors
-316   >0156                   xop1_get_fgbg:
-317   >0156=>C720 >F7BE       	mov @vfgbg, *12
-318   >015A=>10BF             	jmp xop1_out
-320                           	;	12 = draw line
-321   >015C                   xop1_draw_line:
-322   >015C=>0420 >0B70       	blwp @line
-323   >0160=>10BC             	jmp xop1_out
-325                           	;	13 = draw pixel
-326   >0162                   xop1_draw_pixel:
-327   >0162=>0420 >0A72       	blwp @pixel
-328   >0166=>10B9             	jmp xop1_out
-330                           	;	14 = reset video screen
-331   >0168                   xop1_reset_screen:
-332   >0168=>06A0 >0898           bl  @vreset
-333   >016C=>06A0 >04EC           bl  @vscreenon
-334   >0170=>10B4             	jmp xop1_out
-336                           	;	15 = set video int flags (see vintflags)
-337   >0172                   xop1_set_vintflags:
-338                               ; ensure cursor is erased (usually indicates we're drawing)
-339   >0172=>06A0 >0A5C           bl     @vcursoroff
-340   >0176=>D82C >0001 >FF60 	movb   @1(12), @vintflags
-341   >017C=>10AE             	jmp    xop1_out
-343                           	;	16 = set font
-344   >017E                   xop1_set_font:
-345   >017E=>C05C             	mov *12, 1
-346   >0180=>06A0 >09DE       	bl @vsetfont
-347   >0184=>10AA             	jmp xop1_out
-349                           	;	17 = draw filled rect
-350   >0186                   xop1_fill_rect:
-351   >0186=>0420 >0AF6       	blwp @fillrect
-352   >018A=>10A7             	jmp	xop1_out
-354                           	;	18 = generate pseudorandom number
-355   >018C                   xop1_random:
-356   >018C=>06A0 >021A       	bl @random
-357   >0190=>C700             	mov 0, *12
-358   >0192=>10A3             	jmp xop1_out
-360                           	;	19 = DSRLNK
-361   >0194                   xop1_dsrlnk:
-362   >0194=>C05C             	mov *12, 1
-363   >0196=>0420 >1E04       	blwp @dsrlnk
-364   >019A=>C700             	mov 0, *12
-365   >019C=>109E             	jmp xop1_out
-367                               ;   20 = get video table ( # -- addr )
-368   >019E                   xop1_get_vtab:
-369   >019E=>C05C                 mov *12, 1
-370   >01A0=>06A0 >07B0           bl @vgettab
-371   >01A4=>C700                 mov 0, *12
-372   >01A6=>1037                 jmp xop1_out2
-374                               ;   21 = set VDP reg ( newval index -- )
-375   >01A8                   xop1_set_vdpreg:
-376   >01A8=>C03C                 mov *12+, 0
-377   >01AA=>0A80                 sla 0, 8
-378   >01AC=>E01C                 soc *12, 0
-379   >01AE=>06A0 >046E           bl @vwreg
-380   >01B2=>1031                 jmp xop1_out2
-382                               ;   22 = get VDP reg ( index -- val )
-383   >01B4                   xop1_get_vdpreg:
-384   >01B4=>C05C                 mov *12, 1
-385   >01B6=>06A0 >049C           bl @vrreg    
-386   >01BA=>C701                 mov 1, *12
-387   >01BC=>102C                 jmp xop1_out2
-389                               ;   23 = set r/w video page ( 0|1|2|3 -- val )
-390   >01BE                   xop1_set_vrwpage:
-391   >01BE=>C05C                 mov *12, 1
-392   >01C0=>06A0 >03B4           bl @vrwpage
-393   >01C4=>1028                 jmp xop1_out2
-394                               
-395                               ;   24 = set visible video page ( 0|1|2|3 -- val )
-396   >01C6                   xop1_set_vpage:
-397   >01C6=>C05C                 mov *12, 1
-398   >01C8=>06A0 >03EC           bl @vpage
-399   >01CC=>1024                 jmp xop1_out2
-401                               ;   25 = reset palette
-402   >01CE                   xop1_reset_palette:
-403   >01CE=>06A0 >15F8           bl      @vsetpalette
-404   >01D2=>1021                 jmp     xop1_out2
-405                              
-406                               ;   26 = save/restore/query video state   ( ... req -- ... )
-407   >01D4                   xop1_video_state:
-408   >01D4=>C05C                 mov     *12, 1
-409   >01D6=>C0AC >0002           mov     @2(12), 2  ; if used
-410   >01DA=>06A0 >097A           bl      @vsaverestore
-411   >01DE=>C701                 mov     1, *12
-412   >01E0=>101A                 jmp     xop1_out2
-414                               ;   27 = get address of X/Y in window   ( x|y -- addr shift )
-415   >01E2                   xop1_get_text_addr:
-416   >01E2=>C01C                 mov     *12, 0
-417   >01E4=>C060 >F7A4           mov     @vcoordaddr, 1
-418   >01E8=>0691                 bl      *1
-419   >01EA=>C700                 mov     0, *12
-420   >01EC=>CB01 >0002           mov     1, @2(12)
-421   >01F0=>1012                 jmp     xop1_out2
-422                              
-423                              ;    28 = get X/Y coords ( -- x|y )
-424   >01F2                   xop1_get_xy:
-425   >01F2=>C720 >F7CA           mov     @vx, *12
-426   >01F6=>100F                 jmp     xop1_out2
-427                              
-428                              ;    29 = type (interpreted) ( caddr u -- )
-429   >01F8                   xop1_type:
-430   >01F8=>C0BC                 mov     *12+, 2
-431   >01FA=>C0DC                 mov     *12, 3
-432   >01FC=>06A0 >1C78           bl      @type
-433   >0200=>100A                 jmp     xop1_out2
-434                                  
-435                               ;   30 = read/write disk block ( block# addr r/w -- err )
-436   >0202                   xop1_rw_block:
-437   >0202=>0420 >1F24           blwp @rwblock
-438   >0206=>1007                 jmp xop1_out2
-440                               ;   31 = queue sound track ( track -- )
-441   >0208                   xop1_qtrack:
-442   >0208=>C09C                 mov     *12, 2
-443   >020A=>06A0 >2506           bl      @xsnd_queue_track
-444   >020E=>1003                 jmp     xop1_out2
-446                           	;	32 = draw circle
-447   >0210                   xop1_draw_circle:
-448   >0210=>0420 >0BC6       	blwp @circle
-449   >0214=>1000             	jmp xop1_out2
-451                               
-452   >0216                   xop1_out2:
-453   >0216=>0460 >00DA           b   @xop1_out
-454   >021A                   random:
-455   >021A=>C020 >F912       	mov    @randseed1, 0
-456   >021E=>C040             	mov    0, 1
-457   >0220=>0910             	srl    0, 1
-458   >0222=>0241 >0001       	andi   1, 1
-459   >0226=>0501             	neg    1
-460   >0228=>0241 >B400       	andi   1, >B400
-461   >022C=>2801             	xor    1, 0
-462   >022E=>C800 >F912       	mov    0, @randseed1
-464   >0232=>0202 >6FE5       	li     2, >6fe5
-465   >0236=>38A0 >F914       	mpy    @randseed2, 2
-466   >023A=>0225 >7AB9       	ai     5, >7ab9
-467   >023E=>C805 >F914       	mov    5, @randseed2
-469   >0242=>A020 >F780       	a	   @uptime, 0
-470   >0246=>0B05             	src    5, 0
-471   >0248=>2805             	xor    5, 0
-472   >024A=>2820 >F910       	xor    @randnoise, 0
-473   >024E=>045B             	rt
-479   >0250                   clr mov     *11+, 0
+215   >00C4=>0202 >0208 >0210 	dw      xop1_rw_block,xop1_qtrack,xop1_draw_circle
+216   >00CA                   xop1last equ $
+222   >00CA                   xop1_real:
+223   >00CA=>C2AD >0014       	mov @SP+SP(13), SP			; stack ptr
+224   >00CE=>064A             	dect SP
+225   >00D0=>C68C             	mov 12 , *SP
+226   >00D2=>C30B             	mov 11 , 12				; copy op ptr
+228   >00D4=>0281 >0021       	ci	1,(xop1last - xop1list) / 2
+229   >00D8=>1204             	jle	xop1_pick
+230   >00DA                   xop1_out
+231   >00DA=>C33A             	mov *SP+, 12
+232   >00DC=>06A0 >007E       	bl	@bankrtwp
+233   >00E0=>0004             	data	xop1flag
+235   >00E2                   xop1_pick
+236   >00E2=>A041             	a	1,1
+237   >00E4=>C061 >0088       	mov	@xop1list(1),1
+238   >00E8=>0451             	b	*1
+240                               ;   0 = restore video mode (minimal)
+241   >00EA                   xop1_restore_mode
+242   >00EA=>06A0 >04A4       	bl @vrestoremode
+243   >00EE=>10F5             	jmp xop1_out
+244                           	
+245                           	;	1 = keyavail?
+246   >00F0                   xop1_key_avail 
+247   >00F0=>02E0 >FC60           lwpi    vidws
+248   >00F4=>06A0 >18BA           bl  @scankbd
+249   >00F8=>02E0 >FC40           lwpi    xopws
+250   >00FC=>06A0 >1A12       	bl	@kbdavail
+251   >0100=>04DC             	clr	*12
+252   >0102=>1301             	jeq xop1_1_out
+253   >0104=>071C             	seto *12
+254   >0106                   xop1_1_out
+255   >0106=>10E9             	jmp xop1_out
+257                           	;	2 = readkey
+258   >0108                   xop1_read_key	
+259   >0108=>06A0 >1A1A       	bl	@kbdread
+261   >010C=>C700             	mov	0,*12
+262   >010E=>10E5             	jmp xop1_out
+264                           	;	3 = emit (interpreted)
+265   >0110                   xop1_emit
+266   >0110=>D06C >0001       	movb   @1(12),1
+267   >0114=>06A0 >1C54       	bl     @emit
+268   >0118=>10E0             	jmp    xop1_out
+270                           	;	4 = emit, not interpreted
+271   >011A                   xop1_emit_raw
+272   >011A=>C05C             	mov    *12,1
+273   >011C=>06A0 >1AA8       	bl	    @printchar
+274   >0120=>10DC             	jmp    xop1_out
+276                           	; 	5 = gotoxy
+277   >0122                   xop1_gotoxy
+278   >0122=>C01C             	mov *12,0		; hi=x, lo=y
+279   >0124=>06A0 >1AD2       	bl @gotoxy
+280   >0128=>10D8             	jmp xop1_out
+282                           	;	6 = cls (window)
+283   >012A                   xop1_clear_window
+284   >012A=>06A0 >1B32           bl @termclear
+285   >012E=>10D5             	jmp xop1_out
+287                           	;	7 = text window
+288                           	;	
+289   >0130                   xop1_set_window
+290   >0130=>C01C             	mov *12, 0
+291   >0132=>C06C >0002       	mov @2(12), 1
+292   >0136=>06A0 >1A54       	bl @window
+293   >013A=>10CF             	jmp xop1_out
+295                           	;	8 = report text window
+296   >013C                   xop1_get_window
+297   >013C=>CF20 >F7C2       	mov @vwx, *12+
+298   >0140=>CF20 >F7C4       	mov @vwxs, *12+
+299   >0144=>10CA             	jmp xop1_out
+301                           	;	9 = graphics mode (ONLY)
+302   >0146                   xop1_set_mode
+303   >0146=>C05C             	mov *12, 1
+304   >0148=>0420 >0750       	blwp @vsetmode
+305   >014C=>10C6             	jmp xop1_out
+307                           	;	10 = set colors
+308   >014E                   xop1_set_fgbg:
+309   >014E=>C01C             	mov *12, 0
+310   >0150=>06A0 >036C       	bl @vsetcolor
+311   >0154=>10C2             	jmp xop1_out
+313                           	;	11 = get colors
+314   >0156                   xop1_get_fgbg:
+315   >0156=>C720 >F7BE       	mov @vfgbg, *12
+316   >015A=>10BF             	jmp xop1_out
+318                           	;	12 = draw line
+319   >015C                   xop1_draw_line:
+320   >015C=>0420 >0B70       	blwp @line
+321   >0160=>10BC             	jmp xop1_out
+323                           	;	13 = draw pixel
+324   >0162                   xop1_draw_pixel:
+325   >0162=>0420 >0A72       	blwp @pixel
+326   >0166=>10B9             	jmp xop1_out
+328                           	;	14 = reset video screen
+329   >0168                   xop1_reset_screen:
+330   >0168=>06A0 >0898           bl  @vreset
+331   >016C=>06A0 >04EC           bl  @vscreenon
+332   >0170=>10B4             	jmp xop1_out
+334                           	;	15 = set video int flags (see vintflags)
+335   >0172                   xop1_set_vintflags:
+336                               ; ensure cursor is erased (usually indicates we're drawing)
+337   >0172=>06A0 >0A5C           bl     @vcursoroff
+338   >0176=>D82C >0001 >FF60 	movb   @1(12), @vintflags
+339   >017C=>10AE             	jmp    xop1_out
+341                           	;	16 = set font
+342   >017E                   xop1_set_font:
+343   >017E=>C05C             	mov *12, 1
+344   >0180=>06A0 >09DE       	bl @vsetfont
+345   >0184=>10AA             	jmp xop1_out
+347                           	;	17 = draw filled rect
+348   >0186                   xop1_fill_rect:
+349   >0186=>0420 >0AF6       	blwp @fillrect
+350   >018A=>10A7             	jmp	xop1_out
+352                           	;	18 = generate pseudorandom number
+353   >018C                   xop1_random:
+354   >018C=>06A0 >021A       	bl @random
+355   >0190=>C700             	mov 0, *12
+356   >0192=>10A3             	jmp xop1_out
+358                           	;	19 = DSRLNK
+359   >0194                   xop1_dsrlnk:
+360   >0194=>C05C             	mov *12, 1
+361   >0196=>0420 >1E04       	blwp @dsrlnk
+362   >019A=>C700             	mov 0, *12
+363   >019C=>109E             	jmp xop1_out
+365                               ;   20 = get video table ( # -- addr )
+366   >019E                   xop1_get_vtab:
+367   >019E=>C05C                 mov *12, 1
+368   >01A0=>06A0 >07B0           bl @vgettab
+369   >01A4=>C700                 mov 0, *12
+370   >01A6=>1037                 jmp xop1_out2
+372                               ;   21 = set VDP reg ( newval index -- )
+373   >01A8                   xop1_set_vdpreg:
+374   >01A8=>C03C                 mov *12+, 0
+375   >01AA=>0A80                 sla 0, 8
+376   >01AC=>E01C                 soc *12, 0
+377   >01AE=>06A0 >046E           bl @vwreg
+378   >01B2=>1031                 jmp xop1_out2
+380                               ;   22 = get VDP reg ( index -- val )
+381   >01B4                   xop1_get_vdpreg:
+382   >01B4=>C05C                 mov *12, 1
+383   >01B6=>06A0 >049C           bl @vrreg    
+384   >01BA=>C701                 mov 1, *12
+385   >01BC=>102C                 jmp xop1_out2
+387                               ;   23 = set r/w video page ( 0|1|2|3 -- val )
+388   >01BE                   xop1_set_vrwpage:
+389   >01BE=>C05C                 mov *12, 1
+390   >01C0=>06A0 >03B4           bl @vrwpage
+391   >01C4=>1028                 jmp xop1_out2
+392                               
+393                               ;   24 = set visible video page ( 0|1|2|3 -- val )
+394   >01C6                   xop1_set_vpage:
+395   >01C6=>C05C                 mov *12, 1
+396   >01C8=>06A0 >03EC           bl @vpage
+397   >01CC=>1024                 jmp xop1_out2
+399                               ;   25 = reset palette
+400   >01CE                   xop1_reset_palette:
+401   >01CE=>06A0 >15F8           bl      @vsetpalette
+402   >01D2=>1021                 jmp     xop1_out2
+403                              
+404                               ;   26 = save/restore/query video state   ( ... req -- ... )
+405   >01D4                   xop1_video_state:
+406   >01D4=>C05C                 mov     *12, 1
+407   >01D6=>C0AC >0002           mov     @2(12), 2  ; if used
+408   >01DA=>06A0 >097A           bl      @vsaverestore
+409   >01DE=>C701                 mov     1, *12
+410   >01E0=>101A                 jmp     xop1_out2
+412                               ;   27 = get address of X/Y in window   ( x|y -- addr shift )
+413   >01E2                   xop1_get_text_addr:
+414   >01E2=>C01C                 mov     *12, 0
+415   >01E4=>C060 >F7A4           mov     @vcoordaddr, 1
+416   >01E8=>0691                 bl      *1
+417   >01EA=>C700                 mov     0, *12
+418   >01EC=>CB01 >0002           mov     1, @2(12)
+419   >01F0=>1012                 jmp     xop1_out2
+420                              
+421                              ;    28 = get X/Y coords ( -- x|y )
+422   >01F2                   xop1_get_xy:
+423   >01F2=>C720 >F7CA           mov     @vx, *12
+424   >01F6=>100F                 jmp     xop1_out2
+425                              
+426                              ;    29 = type (interpreted) ( caddr u -- )
+427   >01F8                   xop1_type:
+428   >01F8=>C0BC                 mov     *12+, 2
+429   >01FA=>C0DC                 mov     *12, 3
+430   >01FC=>06A0 >1C78           bl      @type
+431   >0200=>100A                 jmp     xop1_out2
+432                                  
+433                               ;   30 = read/write disk block ( block# addr r/w -- err )
+434   >0202                   xop1_rw_block:
+435   >0202=>0420 >1F24           blwp @rwblock
+436   >0206=>1007                 jmp xop1_out2
+438                               ;   31 = queue sound track ( track -- )
+439   >0208                   xop1_qtrack:
+440   >0208=>C09C                 mov     *12, 2
+441   >020A=>06A0 >2506           bl      @xsnd_queue_track
+442   >020E=>1003                 jmp     xop1_out2
+444                           	;	32 = draw circle
+445   >0210                   xop1_draw_circle:
+446   >0210=>0420 >0BC6       	blwp @circle
+447   >0214=>1000             	jmp xop1_out2
+449                               
+450   >0216                   xop1_out2:
+451   >0216=>0460 >00DA           b   @xop1_out
+452   >021A                   random:
+453   >021A=>C020 >F912       	mov    @randseed1, 0
+454   >021E=>C040             	mov    0, 1
+455   >0220=>0910             	srl    0, 1
+456   >0222=>0241 >0001       	andi   1, 1
+457   >0226=>0501             	neg    1
+458   >0228=>0241 >B400       	andi   1, >B400
+459   >022C=>2801             	xor    1, 0
+460   >022E=>C800 >F912       	mov    0, @randseed1
+462   >0232=>0202 >6FE5       	li     2, >6fe5
+463   >0236=>38A0 >F914       	mpy    @randseed2, 2
+464   >023A=>0225 >7AB9       	ai     5, >7ab9
+465   >023E=>C805 >F914       	mov    5, @randseed2
+467   >0242=>A020 >F780       	a	   @uptime, 0
+468   >0246=>0B05             	src    5, 0
+469   >0248=>2805             	xor    5, 0
+470   >024A=>2820 >F910       	xor    @randnoise, 0
+471   >024E=>045B             	rt
+477   >0250                   clr mov     *11+, 0
       >0250=>C03B             
-480   >0252=>C07B                 mov     *11+, 1
-481   >0254                   $1: clr     *0+
+478   >0252=>C07B                 mov     *11+, 1
+479   >0254                   $1: clr     *0+
       >0254=>04F0             
-482   >0256=>0641                 dect    1
-483   >0258=>15FD                 jgt     $1-
-484   >025A=>045B                 rt
-485                               
-486   >025C                   sinit	
-487   >025C=>020A >F780       	li SP,sysstack + sysstacksize
-488                           	
-489                           	; setup NMI interrupt
-490   >0260=>C820 >29AC >FFFC 	mov    #intws, @>fffc
-491   >0266=>C820 >29AE >FFFE 	mov    #abort, @>fffe
-493   >026C=>0200 >ACE1       	li     0, >ACE1
-494   >0270=>C800 >F912       	mov    0,@randseed1
-495                           	
-496                               ;   reset clears all memory
-497                           	;clr	   @uptime
-498                           	;clr	   @uptime + 2
-499                           	;clr	   @timeout
-500                           	;clr	   @userint
-501                           	;clr    @randseed2
-502                           	;clr    @randnoise
-504   >0274=>045B             	rt
-507                           	incl	int.i
+480   >0256=>0641                 dect    1
+481   >0258=>15FD                 jgt     $1-
+482   >025A=>045B                 rt
+483                               
+484   >025C                   sinit	
+485   >025C=>020A >F780       	li SP,sysstack + sysstacksize
+486                           	
+487                           	; setup NMI interrupt
+488   >0260=>C820 >29AC >FFFC 	mov    #intws, @>fffc
+489   >0266=>C820 >29AE >FFFE 	mov    #abort, @>fffe
+491   >026C=>0200 >ACE1       	li     0, >ACE1
+492   >0270=>C800 >F912       	mov    0,@randseed1
+493                           	
+494                               ;   reset clears all memory
+495                           	;clr	   @uptime
+496                           	;clr	   @uptime + 2
+497                           	;clr	   @timeout
+498                           	;clr	   @userint
+499                           	;clr    @randseed2
+500                           	;clr    @randnoise
+502   >0274=>045B             	rt
+505                           	incl	int.i
 *** int.i
 31    >0276                   int1 limi	0			; disable interrupts 
       >0276=>0300 >0000       
@@ -647,7 +646,7 @@
 140   >0322=>06A0 >007E       	bl		@bankrtwp
 141   >0326=>0002             	data	int2flag
 *** nforth.tsm
-509                           	incl	video.i
+507                           	incl	video.i
 *** video.i
 30    >0328                   h08	byte	8
       >0328=>08             
@@ -1868,7 +1867,7 @@
 1328  >0D58=>0380                 rtwp
 1329                              
 *** nforth.tsm
-510                           	incl	video_text.i
+508                           	incl	video_text.i
 *** video_text.i
 21                              
 22    >0D5A                   vtextsetup
@@ -2112,7 +2111,7 @@
 260   >0F1C                   vnopclearline:
 261   >0F1C=>045B                 rt    
 *** nforth.tsm
-511                           	incl	video_bit.i
+509                           	incl	video_bit.i
 *** video_bit.i
 23    >0F1E                   vbitmapsetup
 24    >0F1E=>D820 >0019 >F7CC 	movb	#00,@vmono
@@ -3035,7 +3034,7 @@
 *** video_bit.i
 1021  >159C=>045B             	rt
 *** nforth.tsm
-512                           	incl	video_bit4.i
+510                           	incl	video_bit4.i
 *** video_bit4.i
 26    >159E                   vstdpalette
 27    >159E=>0000                 db >00, >00 ;0
@@ -3571,7 +3570,7 @@
 *** video_bit4.i
 576   >18B0=>045B                 rt
 *** nforth.tsm
-513                           	incl	kbd.i
+511                           	incl	kbd.i
 *** kbd.i
 24    >18B2                   kinit
 25                                ;   reset clears all memory
@@ -3750,8 +3749,8 @@
 304   >1A3C                   krbempty:
 305   >1A3C=>045B             	rt
 *** nforth.tsm
-514                           	
-515                           	incl	term.i
+512                           	
+513                           	incl	term.i
 *** term.i
 30    >1A3E                   treset  	
 31    >1A3E=>04E0 >F7CA       	clr	   @vx			    ; upper-left corner
@@ -4102,7 +4101,7 @@
 354   >1CA0=>045B                 rt
 355                           	
 *** nforth.tsm
-517                           	incl	dev.i
+515                           	incl	dev.i
 *** dev.i
 29    >1CA2                   haa	byte	>aa
       >1CA2=>AA             
@@ -4459,7 +4458,7 @@
 426   >203A=>045B                 rt
 427                           	
 *** nforth.tsm
-518                               incl    sound.i
+516                               incl    sound.i
 *** sound.i
 22    >203C                   sndinit
 23                                PUSH    SP, 11
@@ -5599,71 +5598,71 @@
 1098                              ; db      >00, 8,  >18, >83, 2
 1101                                  
 *** nforth.tsm
-520   >292C                   reset:   limi	0
+518   >292C                   reset:   limi	0
       >292C=>0300 >0000       
-521                               ;   clear memory
-522   >2930=>06A0 >0250           bl      @clr
-523   >2934=>F780 >0320           data    _RAMSTART, _RAMEND - _RAMSTART
-524                            #if ENHANCED_MEMORY
-525                            #else    
-530   >2938=>06A0 >025C       	bl	@sinit			; system init
-531   >293C=>06A0 >203C           bl  @sndinit        ; sound init
-532   >2940=>06A0 >032C       	bl	@vinit			; video init
-533   >2944=>06A0 >18B2       	bl	@kinit			; keyboard init
-534   >2948=>06A0 >1CA4       	bl	@dinit			; device init
-536   >294C=>06A0 >1DAE       	bl	@diskinit		; disk init
-538   >2950                   boot:	clr	12
+519                               ;   clear memory
+520   >2930=>06A0 >0250           bl      @clr
+521   >2934=>F780 >0320           data    _RAMSTART, _RAMEND - _RAMSTART
+522                            #if ENHANCED_MEMORY
+523                            #else    
+528   >2938=>06A0 >025C       	bl	@sinit			; system init
+529   >293C=>06A0 >203C           bl  @sndinit        ; sound init
+530   >2940=>06A0 >032C       	bl	@vinit			; video init
+531   >2944=>06A0 >18B2       	bl	@kinit			; keyboard init
+532   >2948=>06A0 >1CA4       	bl	@dinit			; device init
+534   >294C=>06A0 >1DAE       	bl	@diskinit		; disk init
+536   >2950                   boot:	clr	12
       >2950=>04CC             
-539   >2952=>1E00             	sbz	0			; Interrupt mode
-540   >2954=>1D01             	sbo	1			; Enable external interrupts
-541   >2956=>1D02             	sbo	2			; Enable VDP interrupts
-542   >2958=>1E03             	sbz	3			; Disable clock interrupts
-544                            #if ENHANCED_MEMORY
-545                            
-546                            #else
-561   >295A                   boot0:
-562                           	; see if we have GROM extension
-563   >295A=>0200 >6000       	li 0, >6000
-564   >295E=>06A0 >044A       	bl @gwaddr
-566   >2962=>06A0 >296A       	bl @copyram
-568   >2966                   boot1:
-569   >2966=>0460 >0060       	b	@FORTH_COLD
-578   >296A                   copyram 
-579   >296A=>0300 >0000           limi 0
-580   >296E=>0203 >FF90           li  3, GPLRD
-581   >2972                   cr0:    
-582   >2972=>D013             	movb *3, 0
-583   >2974=>06C0             	swpb 0
-584   >2976=>D013             	movb *3, 0
-585   >2978=>06C0             	swpb 0			; R1 = start addr in RAM
-586   >297A=>0280 >AA55       	ci 0, >aa55
-587   >297E=>1610             	jne cr1			; no GROM block
-589   >2980=>D053             	movb *3, 1
-590   >2982=>06C1             	swpb 1
-591   >2984=>D053             	movb *3, 1
-592   >2986=>06C1             	swpb 1			; R1 = start addr in RAM
-594   >2988=>D093             	movb *3, 2
-595   >298A=>06C2             	swpb 2
-596   >298C=>D093             	movb *3, 2
-597   >298E=>06C2             	swpb 2			; R2 = end addr in RAM
-599   >2990=>0221 >0006       	ai 1, 6
-600   >2994=>1002             	jmp cr3
-602                           	;	copy data into RAM
-603   >2996                   cr2:
-604   >2996=>DC53             	movb *3, *1+
-605   >2998=>DC53             	movb *3, *1+
-606   >299A                   cr3:
-607   >299A=>8081             	c 1, 2
-608   >299C=>1AFC             	jl cr2
-610   >299E=>10E9             	jmp cr0
-612   >29A0                   cr1:
-613   >29A0=>0300 >0001           limi 1
-614   >29A4=>045B             	rt
-621   >29A6                   dieerr:	bl	@type
+537   >2952=>1E00             	sbz	0			; Interrupt mode
+538   >2954=>1D01             	sbo	1			; Enable external interrupts
+539   >2956=>1D02             	sbo	2			; Enable VDP interrupts
+540   >2958=>1E03             	sbz	3			; Disable clock interrupts
+542                            #if ENHANCED_MEMORY
+543                            
+544                            #else
+559   >295A                   boot0:
+560                           	; see if we have GROM extension
+561   >295A=>0200 >6000       	li 0, >6000
+562   >295E=>06A0 >044A       	bl @gwaddr
+564   >2962=>06A0 >296A       	bl @copyram
+566   >2966                   boot1:
+567   >2966=>0460 >0060       	b	@FORTH_COLD
+576   >296A                   copyram 
+577   >296A=>0300 >0000           limi 0
+578   >296E=>0203 >FF90           li  3, GPLRD
+579   >2972                   cr0:    
+580   >2972=>D013             	movb *3, 0
+581   >2974=>06C0             	swpb 0
+582   >2976=>D013             	movb *3, 0
+583   >2978=>06C0             	swpb 0			; R1 = start addr in RAM
+584   >297A=>0280 >AA55       	ci 0, >aa55
+585   >297E=>1610             	jne cr1			; no GROM block
+587   >2980=>D053             	movb *3, 1
+588   >2982=>06C1             	swpb 1
+589   >2984=>D053             	movb *3, 1
+590   >2986=>06C1             	swpb 1			; R1 = start addr in RAM
+592   >2988=>D093             	movb *3, 2
+593   >298A=>06C2             	swpb 2
+594   >298C=>D093             	movb *3, 2
+595   >298E=>06C2             	swpb 2			; R2 = end addr in RAM
+597   >2990=>0221 >0006       	ai 1, 6
+598   >2994=>1002             	jmp cr3
+600                           	;	copy data into RAM
+601   >2996                   cr2:
+602   >2996=>DC53             	movb *3, *1+
+603   >2998=>DC53             	movb *3, *1+
+604   >299A                   cr3:
+605   >299A=>8081             	c 1, 2
+606   >299C=>1AFC             	jl cr2
+608   >299E=>10E9             	jmp cr0
+610   >29A0                   cr1:
+611   >29A0=>0300 >0001           limi 1
+612   >29A4=>045B             	rt
+619   >29A6                   dieerr:	bl	@type
       >29A6=>06A0 >1C78       
-622   >29AA=>10FF             	jmp	$
-624   >29AC=>FC40 >0070 >F786 	consttable
+620   >29AA=>10FF             	jmp	$
+622   >29AC=>FC40 >0070 >F786 	consttable
       >29B2=>0060 >0808 >1F00 
       >29B8=>00C0 >1E03 >0168 
       >29BE=>0E10 >F900       
-626   >29C2                   the_end equ $
+624   >29C2                   the_end equ $

@@ -30,6 +30,7 @@ import v9t9.common.asm.RawInstruction;
 import v9t9.common.asm.Routine;
 import v9t9.common.machine.IMachine;
 import v9t9.common.memory.IMemoryDomain;
+import v9t9.common.memory.IMemoryEntry;
 import v9t9.gui.common.IMemoryDecoder;
 
 /**
@@ -271,6 +272,13 @@ public class DisassemblerDecoder implements IMemoryDecoder {
 			public String toString() {
 				return "instr: " + instr;
 			}
+			
+			@Override
+			public String getSymbol() {
+				IMemoryEntry entry = domain.getEntryAt(instr.getPc());
+				return entry != null ? entry.lookupSymbol((short) instr.getPc()) : "";
+			}
+			
 			@Override
 			public int getAddr() {
 				return instr.getPc();

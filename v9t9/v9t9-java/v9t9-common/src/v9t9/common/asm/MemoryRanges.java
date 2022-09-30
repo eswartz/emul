@@ -37,7 +37,7 @@ public class MemoryRanges {
      * @return
      */
     public MemoryRange getRangeContaining(int addr) {
-        Integer iAddr = new Integer(addr);
+        Integer iAddr = Integer.valueOf(addr);
         MemoryRange range = ranges.get(iAddr);
         if (range != null) {
 			return range;
@@ -63,11 +63,11 @@ public class MemoryRanges {
         		ranges.remove(startRange);
         	}
         }*/
-        ranges.put(new Integer(baseAddr), new MemoryRange(baseAddr, MemoryRange.CODE));
+        ranges.put(Integer.valueOf(baseAddr), new MemoryRange(baseAddr, MemoryRange.CODE));
         
         // mark end of range
         //if (endRange == null) {
-            ranges.put(new Integer(baseAddr + size), new MemoryRange(baseAddr + size, MemoryRange.EMPTY));
+            ranges.put(Integer.valueOf(baseAddr + size), new MemoryRange(baseAddr + size, MemoryRange.EMPTY));
         //}
     }
 
@@ -81,7 +81,7 @@ public class MemoryRanges {
 
 	public void clear() {
 		ranges.clear();
-        ranges.put(new Integer(0x10000), new MemoryRange(0x10000, MemoryRange.EMPTY));
+        ranges.put(Integer.valueOf(0x10000), new MemoryRange(0x10000, MemoryRange.EMPTY));
 		
 	}
 

@@ -92,8 +92,11 @@ public class DecodedMemoryContentProvider implements ILazyContentProvider {
 		if (row == null) {
 			IDecodedContent content = decoderProvider.decodeItem(index + firstIndex);
 			byte[] bytes = new byte[content.getSize()];
-			for (int i = 0; i < bytes.length; i++)
-				bytes[i] = range.getEntry().flatReadByte(content.getAddr() + i);
+			int mend = range.getAddress() + range.getSize();
+			for (int i = 0; i < bytes.length; i++) {
+				int maddr = content.getAddr() + i;
+				bytes[i] = maddr < mend ? range.getEntry().flatReadByte(maddr) : (byte) 0;
+			}
 			row = new DecodedRow(content, bytes);
 		}
 		

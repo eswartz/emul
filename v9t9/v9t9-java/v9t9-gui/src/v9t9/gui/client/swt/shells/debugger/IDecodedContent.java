@@ -15,7 +15,7 @@ package v9t9.gui.client.swt.shells.debugger;
  *
  */
 public interface IDecodedContent {
-
+	String getSymbol();
 	int getAddr();
 	int getSize();
 	Object getContent();
