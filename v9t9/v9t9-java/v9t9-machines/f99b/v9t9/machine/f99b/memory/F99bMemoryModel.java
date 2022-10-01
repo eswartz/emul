@@ -33,7 +33,13 @@ import v9t9.common.memory.MemoryEntryInfo;
 import v9t9.engine.memory.GplMmio;
 import v9t9.engine.memory.MemoryEntry;
 import v9t9.engine.memory.MemoryEntryInfoBuilder;
+import v9t9.engine.speech.SpeechTMS5220;
 import v9t9.machine.EmulatorMachinesData;
+import v9t9.machine.ti99.dsr.pcode.PCodeDsr;
+import v9t9.machine.ti99.dsr.realdisk.CorcompDiskImageDsr;
+import v9t9.machine.ti99.dsr.realdisk.TIDiskImageDsr;
+import v9t9.machine.ti99.dsr.rs232.TIRS232Dsr;
+import v9t9.machine.ti99.dsr.rs232.TIRS232PIODsr;
 import v9t9.machine.ti99.memory.BaseTI994AMemoryModel;
 import v9t9.machine.ti99.memory.EnhancedRamByteArea;
 
@@ -228,7 +234,9 @@ public class F99bMemoryModel extends BaseTI994AMemoryModel {
 	 */
 	@Override
 	public MemoryEntryInfo[] getOptionalRomMemoryEntries() {
-		return new MemoryEntryInfo[0];
+		return new MemoryEntryInfo[] { 
+				SpeechTMS5220.speechRomInfo,
+		};
 	}
 	
 	/* (non-Javadoc)

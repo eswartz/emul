@@ -55,6 +55,8 @@ include ../v9t9/video.fi
 
 include ../v9t9/sound.fi
 
+include ../v9t9/speech.fi
+
 include ../v9t9/term.fi
 
 include ../v9t9/kbd.fi
@@ -173,6 +175,8 @@ export>
     video-init
     
     sound-init
+    
+    speech-init
  
     cold-init
 

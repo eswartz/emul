@@ -1,13 +1,17 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <launchConfiguration type="org.eclipse.jdt.launching.localJavaApplication">
-<listAttribute key="org.eclipse.debug.core.MAPPED_RESOURCE_PATHS">
-<listEntry value="/v9t9-tools/forthcomp/v9t9/tools/forthcomp/ForthComp.java"/>
-</listAttribute>
-<listAttribute key="org.eclipse.debug.core.MAPPED_RESOURCE_TYPES">
-<listEntry value="1"/>
-</listAttribute>
-<stringAttribute key="org.eclipse.jdt.launching.MAIN_TYPE" value="v9t9.tools.forthcomp.ForthComp"/>
-<stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="-b f99b/f99brom.f99 -h -c ../../../build/forth99/f99brom.bin -g  ../../../build/forth99/f99bgrom.bin -d ../../../build/forth99/f99bgromdict.grm -l../../../build/forth99/f99brom.lst"/>
-<stringAttribute key="org.eclipse.jdt.launching.PROJECT_ATTR" value="v9t9-tools"/>
-<stringAttribute key="org.eclipse.jdt.launching.WORKING_DIRECTORY" value="${workspace_loc:Forth99}"/>
+    <booleanAttribute key="org.eclipse.debug.core.ATTR_FORCE_SYSTEM_CONSOLE_ENCODING" value="false"/>
+    <listAttribute key="org.eclipse.debug.core.MAPPED_RESOURCE_PATHS">
+        <listEntry value="/v9t9-tools/forthcomp/v9t9/tools/forthcomp/ForthComp.java"/>
+    </listAttribute>
+    <listAttribute key="org.eclipse.debug.core.MAPPED_RESOURCE_TYPES">
+        <listEntry value="1"/>
+    </listAttribute>
+    <booleanAttribute key="org.eclipse.jdt.launching.ATTR_ATTR_USE_ARGFILE" value="false"/>
+    <booleanAttribute key="org.eclipse.jdt.launching.ATTR_USE_CLASSPATH_ONLY_JAR" value="false"/>
+    <stringAttribute key="org.eclipse.jdt.launching.MAIN_TYPE" value="v9t9.tools.forthcomp.ForthComp"/>
+    <stringAttribute key="org.eclipse.jdt.launching.MODULE_NAME" value="v9t9-tools"/>
+    <stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="-b f99b/f99brom.f99 -h -c ../../../build/forth99/f99brom.bin -g  ../../../build/forth99/f99bgrom.bin -d ../../../build/forth99/f99bgromdict.grm -l../../../build/forth99/f99brom.lst"/>
+    <stringAttribute key="org.eclipse.jdt.launching.PROJECT_ATTR" value="v9t9-tools"/>
+    <stringAttribute key="org.eclipse.jdt.launching.WORKING_DIRECTORY" value="${workspace_loc:Forth99}"/>
 </launchConfiguration>

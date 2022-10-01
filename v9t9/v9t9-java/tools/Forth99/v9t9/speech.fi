@@ -1,0 +1,42 @@
+\   speech.fi
+\ 
+\   (c) 2022 Edward Swartz
+\ 
+\   All rights reserved. This program and the accompanying materials
+\   are made available under the terms of the Eclipse Public License v1.0
+\   which accompanies this distribution, and is available at
+\   http://www.eclipse.org/legal/epl-v10.html
+\ 
+
+: speech-wraddr ( addr -- )
+	12 crshift
+	4 0 do
+		4 crshift dup
+		$f and
+		$40 or
+		SPCHWT c!
+	loop
+	drop
+	$40 SPCHWT c!
+;
+
+1 <export
+
+: speech-off ( -- )
+    16 0 do 
+    	$ff SPCHWT c!
+    loop 
+;
+
+: (say) ( addr -- )
+	speech-wraddr
+	$50 SPCHWT c!
+;    
+
+export>
+
+: speech-init
+	SPCHRD c@ drop
+    speech-off
+     
+;

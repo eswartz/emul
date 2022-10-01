@@ -237,6 +237,7 @@ public class SpeechTMS5220 implements ISpeechChip {
 
 	public void write(final byte val) {
 		ILPCDataFetcher fetcher;
+		getSpeechRom();
 		synchronized (this) {
 			fetcher = getDataFetcher();
 		}

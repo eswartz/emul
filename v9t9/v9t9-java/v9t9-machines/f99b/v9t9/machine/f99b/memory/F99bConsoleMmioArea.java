@@ -39,8 +39,8 @@ public class F99bConsoleMmioArea extends ConsoleMmioArea  {
 	public static final int GPLRA = 0x12;
 	public static final int GPLWD = 0x14;
 	public static final int GPLWA = 0x16;
-	public static final int SPCHWT = 0x18;
-	public static final int SPCHRD = 0x1A;
+	public static final int SPCHRD = 0x18;
+	public static final int SPCHWT = 0x1A;
 
 	public static final int SOUND = 0x40;	// 0x20!
 	

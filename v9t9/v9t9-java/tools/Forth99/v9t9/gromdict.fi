@@ -211,20 +211,20 @@ User GDP              \ GROM dictionary pointer
 [THEN]
 
 [IFUNDEF] WORDS
-| : dwalk ( root xt -- )  ( xt: nfa -- 0 | 1 )
-    >r
+| :: dwalk ( root end xt -- )  ( xt: nfa -- 0 | 1 )
+    root
     begin
-        dup GDP @ <    
+        dup end <    
     while
         \ work on current NFA
-        dup r@ execute   ( nfa flag )
+        dup xt execute   ( nfa flag )
         if 
-            drop rdrop exit
+            drop exit
         then 
         \ skip NFA and XT
         nfa>xt@  cell+  
     repeat
-    drop rdrop
+    drop
 ;
 
 | : .word ( nfa -- 0 continue | 1 stop )
@@ -234,9 +234,14 @@ User GDP              \ GROM dictionary pointer
 : WORDS
     >gram_dict_base      \ !!! need real wordlist
     ?dup if 
+    	GDP @
         ['] .word 
         dwalk 
     then
+    >grom_dict g@
+    >grom_dictend g@
+    ['] .word 
+    dwalk 
 ;
 [THEN]
 
