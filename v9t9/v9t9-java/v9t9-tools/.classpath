@@ -3,7 +3,11 @@
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="src" path="forthcomp"/>
 	<classpathentry kind="src" path="tools"/>
-	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-11">
+		<attributes>
+			<attribute name="module" value="true"/>
+		</attributes>
+	</classpathentry>
 	<classpathentry combineaccessrules="false" kind="src" path="/ejs-base"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/v9t9-common"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/v9t9-machines"/>
