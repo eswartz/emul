@@ -400,6 +400,8 @@ public class SwtWindow extends BaseEmulatorWindow {
 		videoRenderer.setFocus();
 		
 		shell.addShellListener(new ShellAdapter() {
+			boolean initialized;
+			
 			@Override
 			public void shellClosed(ShellEvent e) {
 				machine.getEventNotifier().removeListener(eventListener);
@@ -417,21 +419,24 @@ public class SwtWindow extends BaseEmulatorWindow {
 			
 			@Override
 			public void shellActivated(ShellEvent e) {
-				// restore original window geometry
-				String boundsPref = settingsHandler.get(settingEmulatorWindowBounds).getString();
-				final Rectangle rect = SwtPrefUtils.readBoundsString(boundsPref);
-				if (rect != null) {
-					if (!fullScreen.getBoolean()) {
-						adjustRectVisibility(shell, rect);
-						setFullscreen(false);
-						shell.setBounds(rect);
+				if (!initialized) {
+					// restore original window geometry
+					String boundsPref = settingsHandler.get(settingEmulatorWindowBounds).getString();
+					final Rectangle rect = SwtPrefUtils.readBoundsString(boundsPref);
+					if (rect != null) {
+						if (!fullScreen.getBoolean()) {
+							adjustRectVisibility(shell, rect);
+							setFullscreen(false);
+							shell.setBounds(rect);
+						} else {
+							setFullscreen(true);
+						}
+						
+						attachControlListener();
 					} else {
-						setFullscreen(true);
+						attachControlListener();
 					}
-					
-					attachControlListener();
-				} else {
-					attachControlListener();
+					initialized = true;
 				}
 			}
 		});

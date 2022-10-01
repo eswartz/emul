@@ -80,11 +80,9 @@ public class ImageBar extends ImageCanvas implements IImageBar {
 		
 		super(parent, style, gradient, focusRestorer, smoothResize);
 		
-		
 		// the inner composite contains the buttons, tightly packed
 		bblayout = new ButtonBarLayout();
 		buttonComposite.setLayout(bblayout);
-		
 		
 	}
 	
@@ -160,12 +158,11 @@ public class ImageBar extends ImageCanvas implements IImageBar {
 
 			prevSize = new Point(w, h);
 			
-			if (isHorizontal)
+			if (isHorizontal) {
 				((GridData) ImageBar.this.getLayoutData()).heightHint = h;
-			else
-				((GridData) ImageBar.this.getLayoutData()).widthHint = w; 
-			
-//			System.out.println("computeSize: " + prevSize);
+			} else {
+				((GridData) ImageBar.this.getLayoutData()).widthHint = w;
+			} 
 			
 			return prevSize;
 		}
@@ -303,41 +300,19 @@ public class ImageBar extends ImageCanvas implements IImageBar {
 				}
 			};
 			retractTrackListener = new MouseTrackListener() {
-
 				
 				@Override
 				public void mouseEnter(MouseEvent e) {
 					updateCursor();
-					//startRetractTask();
-					
-					
 				}
-
 
 				@Override
 				public void mouseExit(MouseEvent e) {
-//					if (retractTask != null) {
-//						if (fullBounds != null) {
-//							Point realPos = ((Control) e.widget).getParent().toControl(((Control) e.widget).toDisplay(e.x, e.y));
-//							if (!fullBounds.contains(realPos))
-//								return;
-//						}
-//						retractTimer.cancelTask(retractTask);
-//						
-//						retractTask = null;
-//						
-//						setLocation(origPos);
-//					}
 					setCursor(null);
 				}
 
 				@Override
 				public void mouseHover(MouseEvent e) {
-//					long now = System.currentTimeMillis();
-//					long hoverTime = now - enterTime;
-//					System.out.println("hover: " + hoverTime);
-//					
-					
 					updateCursor();
 				}
 				
@@ -349,11 +324,6 @@ public class ImageBar extends ImageCanvas implements IImageBar {
 		}
 	}
 	
-
-
-	/**
-	 * 
-	 */
 	private void startRetractOffer() {
 		if (!offerRetract) {
 			offerRetract = true;
@@ -377,9 +347,6 @@ public class ImageBar extends ImageCanvas implements IImageBar {
 		}
 	}
 
-	/**
-	 * 
-	 */
 	private void stopRetractOffer() {
 		if (offerRetract) {
 			offerRetract = false;
@@ -392,6 +359,7 @@ public class ImageBar extends ImageCanvas implements IImageBar {
 	private void updateCursor() {
 		updateCursor(offerRetract);
 	}
+	
 	private void updateCursor(boolean actionPossible) {
 		if (actionPossible) {
 			int cursor;

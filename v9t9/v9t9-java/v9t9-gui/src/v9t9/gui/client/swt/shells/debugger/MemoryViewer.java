@@ -10,11 +10,17 @@
  */
 package v9t9.gui.client.swt.shells.debugger;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Timer;
+import java.util.concurrent.atomic.AtomicInteger;
 
+import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.layout.GridDataFactory;
 import org.eclipse.jface.resource.FontDescriptor;
 import org.eclipse.jface.resource.JFaceResources;
@@ -44,6 +50,7 @@ import org.eclipse.swt.events.KeyEvent;
 import org.eclipse.swt.events.MenuDetectEvent;
 import org.eclipse.swt.events.MenuDetectListener;
 import org.eclipse.swt.events.MouseEvent;
+import org.eclipse.swt.events.MouseMoveListener;
 import org.eclipse.swt.events.MouseTrackAdapter;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
@@ -58,6 +65,9 @@ import org.eclipse.swt.layout.RowLayout;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
+import org.eclipse.swt.widgets.Event;
+import org.eclipse.swt.widgets.FileDialog;
+import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.MenuItem;
 import org.eclipse.swt.widgets.Table;
@@ -68,6 +78,9 @@ import org.ejs.gui.common.SwtUtils;
 
 import v9t9.common.cpu.IBreakpoint;
 import v9t9.common.cpu.IBreakpointListener;
+import v9t9.common.files.DataFiles;
+import v9t9.common.files.FDR;
+import v9t9.common.files.FDRFactory;
 import v9t9.common.machine.IMachine;
 import v9t9.common.memory.IMemory;
 import v9t9.common.memory.IMemoryDomain;
@@ -79,6 +92,7 @@ import v9t9.gui.common.IMemoryDecoder;
 import v9t9.gui.common.IMemoryDecoderProvider;
 import ejs.base.properties.IPersistable;
 import ejs.base.settings.ISettingSection;
+import ejs.base.utils.FileUtils;
 import ejs.base.utils.HexUtils;
 import ejs.base.utils.Pair;
 
@@ -542,11 +556,13 @@ public class MemoryViewer extends Composite implements IPersistable, ICpuTracker
 		table.setHeaderVisible(true);
 		table.setLinesVisible(false);
 		
+		AtomicInteger lastHoveredAddr = new AtomicInteger(0);
+
 		setupByteEditors(table, props);
 		
-		setupByteTableContextMenu(table);
+		setupByteTableContextMenu(table, lastHoveredAddr);
 
-		setupByteTableHovers(table);
+		setupByteTableHovers(table, lastHoveredAddr);
 		
 	}
 
@@ -622,7 +638,7 @@ public class MemoryViewer extends Composite implements IPersistable, ICpuTracker
 		
 	}
 
-	private void setupByteTableContextMenu(final Table table) {
+	private void setupByteTableContextMenu(final Table table, AtomicInteger lastHoveredAddr) {
 		Menu menu = new Menu(table);
 		MenuItem item;
 		item = new MenuItem(menu, SWT.NONE);
@@ -658,11 +674,72 @@ public class MemoryViewer extends Composite implements IPersistable, ICpuTracker
 				changeCurrentRange(new MemoryRange(currentRange.getEntry()));
 			}
 		});
+
+		item = new MenuItem(menu, SWT.NONE);
+		item.setText("Load memory");
+		item.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				if (currentRange == null)
+					return;
+				
+				FileDialog dialog = new FileDialog(getShell(), SWT.OPEN);
+				dialog.setFilterPath(lastFilePath != null ? new File(lastFilePath).getParent() : null);
+				dialog.setFileName(lastFilePath != null ? new File(lastFilePath).getName() : null);
+				String newPath = dialog.open();
+				if (newPath != null) {
+					lastFilePath = newPath;
+					
+					IMemoryDomain domain = currentRange.entry.getDomain();
+					int addr = currentRange.getAddress() + table.getSelectionIndex() * BYTES;
+					if (addr <= lastHoveredAddr.get() && addr + BYTES > lastHoveredAddr.get()) {
+						addr = lastHoveredAddr.get();
+					}
+					try {
+						byte[] content = DataFiles.readMemoryImage(new File(newPath), 0, 0x10000);
+						int end = currentRange.entry.getAddr() + currentRange.entry.getSize();
+						for (int i = 0; i < content.length; i++) {
+							if (addr + i >= end) {
+								break;
+							}
+							domain.writeByte(addr + i, content[i]);
+						}
+					} catch (IOException e1) {
+						MessageDialog.openError(getShell(), "Error", "Failed to load " + newPath + "\n" + e1.getMessage());
+					}
+				}
+			}
+		});
+		
 		table.setMenu(menu);
 	}
 	
+	private static String lastFilePath;
+	
+	private void setupByteTableHovers(final Table table, AtomicInteger lastHoveredAddr) {
+		table.addListener(SWT.MouseMove, new Listener() {
+			@Override
+			public void handleEvent(Event e) {
+				TableItem item = table.getItem(new Point(e.x, e.y));
+				if (item != null) {
+					for (int i = 0; i <= BYTES; i++) {
+						Rectangle bounds = item.getTextBounds(i);
+						if (e.x >= bounds.x && e.x < bounds.x + bounds.width) {
+							MemoryRow row = (MemoryRow) item.getData();
+							if (row == null)
+								continue;
+							
+							if (i > 0) i--;
+							int addr = row.getAddress() + i;
 
-	private void setupByteTableHovers(final Table table) {
+							lastHoveredAddr.set(addr);
+							return;
+						}
+					}
+				}
+			}
+		});
+
 		table.addMouseTrackListener(new MouseTrackAdapter() {
 			@Override
 			public void mouseHover(MouseEvent e) {
@@ -678,7 +755,7 @@ public class MemoryViewer extends Composite implements IPersistable, ICpuTracker
 							
 							if (i > 0) i--;
 							int addr = row.getAddress() + i;
-							
+
 							// see if the address's symbol is known
 							String descr = ">" + HexUtils.toHex4(addr);
 							String symbol = getSymbolFor(range, addr);
