@@ -37,7 +37,7 @@ msgptrsoffs     dw  msgptrs
 editorhelpoffs  dw  editorhelp
 menubaroffs     dw  menubar
 
-logo    db "Forth99 (c) 2014", 0
+logo    db "Forth99 (c) 2022", 0
     even
     
 ;	The order of these tables follows the 3 shift bits:
