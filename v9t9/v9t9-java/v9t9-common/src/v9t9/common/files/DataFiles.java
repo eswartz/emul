@@ -89,11 +89,9 @@ public class DataFiles {
      
         /* read the chunk */
         byte[] result = new byte[sz];
-        FileInputStream stream = new FileInputStream(file);
-        CompatUtils.skipFully(stream, offset);
-        stream.read(result, 0, size);
-        stream.close();
         
+    	nativeFile.readContents(result, offset, 0, size);
+
         return result;
     }
 
