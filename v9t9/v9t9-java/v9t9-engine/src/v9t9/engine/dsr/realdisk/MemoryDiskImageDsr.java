@@ -16,7 +16,11 @@ import java.util.List;
 import java.util.Map;
 
 import v9t9.common.dsr.IDeviceIndicatorProvider;
+import v9t9.common.dsr.IDsrHandler;
 import v9t9.common.machine.IMachine;
+import v9t9.common.settings.SettingSchemaProperty;
+import v9t9.engine.dsr.DeviceIndicatorProvider;
+import v9t9.engine.dsr.IDevIcons;
 import v9t9.engine.dsr.IMemoryIOHandler;
 import v9t9.engine.files.image.FDC1771;
 import v9t9.engine.files.image.FloppyDrive;
@@ -57,6 +61,7 @@ public class MemoryDiskImageDsr extends BaseDiskImageDsr implements IMemoryIOHan
 	private final int baseAddr;
 
 	private byte flags;
+	private SettingSchemaProperty realDiskDsrActiveSetting;
 
 	/**
 	 * 
@@ -76,6 +81,10 @@ public class MemoryDiskImageDsr extends BaseDiskImageDsr implements IMemoryIOHan
 				settings.get(IDeviceIndicatorProvider.settingDevicesChanged).firePropertyChange();
 			}
 		});
+		
+		realDiskDsrActiveSetting = new SettingSchemaProperty(getName(), Boolean.FALSE);
+		realDiskDsrActiveSetting.addEnablementDependency(settingImagesEnabled);
+
 
 	}
 
@@ -178,15 +187,24 @@ public class MemoryDiskImageDsr extends BaseDiskImageDsr implements IMemoryIOHan
 			return Collections.emptyList();
 			
 		List<IDeviceIndicatorProvider> list = new ArrayList<IDeviceIndicatorProvider>();
-		/*
-		// one inactive icon for DSR
-		DeviceIndicatorProvider deviceIndicatorProvider = new DeviceIndicatorProvider(
-				diskImageDsrEnabled, 
-				"Disk image activity",
-				IDevIcons.DISK_IMAGE, IDevIcons.DISK_IMAGE);
-		list(deviceIndicatorProvider);
-		 */
+//		// one inactive icon for DSR
+//		DeviceIndicatorProvider deviceIndicatorProvider = new DeviceIndicatorProvider(
+//				settingImagesEnabled, 
+//				"Disk image activity",
+//				IDevIcons.DISK_IMAGE,
+//				IDevIcons.DISK_IMAGE,
+//				IDsrHandler.GROUP_REAL_DISK_CONFIGURATION
+//				);
+//		list.add(deviceIndicatorProvider);
 			
+		DeviceIndicatorProvider deviceIndicatorProvider = new DeviceIndicatorProvider(
+				realDiskDsrActiveSetting, 
+				"Disk directory activity",
+				IDevIcons.DSR_DISK_DIR, IDevIcons.DSR_LIGHT,
+				"Edit disk paths", 
+				IDsrHandler.GROUP_REAL_DISK_CONFIGURATION);
+		list.add(deviceIndicatorProvider);
+		
 		for (Map.Entry<String, IProperty> entry : imageMapper.getDiskSettingsMap().entrySet()) {
 			FloppyDrive drive = fdc.getDrive(entry.getKey());
 			if (drive != null) {
