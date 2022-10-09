@@ -9,8 +9,8 @@
     <property name="ejs-base.location" value="../ejs-base"/>
     <property name="ECLIPSE_HOME" value="../../../orbit/plugins"/>
     <property name="debuglevel" value="source,lines,vars"/>
-    <property name="target" value="1.6"/>
-    <property name="source" value="1.6"/>
+    <property name="target" value="11"/>
+    <property name="source" value="11"/>
     <path id="SWT.userclasspath">
 		<!-- this builds against one SWT but runs against others at runtime; ensure all access is API! -->
         <pathelement location="${ejs-base.location}/libs/swt/org.eclipse.swt.gtk.linux.x86_64.jar"/>

@@ -14,8 +14,8 @@
 	<property name="v9t9-server.location" value="../v9t9-server" />
 	<property name="v9t9-video.location" value="../v9t9-video" />
 	<property name="debuglevel" value="source,lines,vars" />
-	<property name="target" value="1.6" />
-	<property name="source" value="1.6" />
+	<property name="target" value="11" />
+	<property name="source" value="11" />
 	<path id="Plug-in Dependencies.libraryclasspath" />
 	<path id="ejs-base.classpath">
 		<path refid="Plug-in Dependencies.libraryclasspath" />

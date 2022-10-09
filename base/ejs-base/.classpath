@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
 	<classpathentry exported="true" kind="lib" path="libs/junit/junit-4.8.1.jar"/>
-	<classpathentry exported="true" kind="lib" path="libs/swt/org.eclipse.jface.jar" sourcepath="libs/swt/org.eclipse.jface.source_3.9.1.v20130725-1141.jar"/>
+	<classpathentry exported="true" kind="lib" path="libs/swt/org.eclipse.jface.jar" sourcepath="/home/ejs/devel/emul/base/ejs-base/libs/swt/org.eclipse.jface.source_3.13.2.v20171022-1656.jar"/>
 	<classpathentry exported="true" kind="lib" path="libs/svgSalamander.jar" sourcepath="libs/svgSalamander-sources.jar">
 		<attributes>
 			<attribute name="javadoc_location" value="file:/home/ejs/devel/emul/base/ejs-base/libs/svgSalamander-doc/"/>
