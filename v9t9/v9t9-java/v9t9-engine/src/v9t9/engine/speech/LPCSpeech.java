@@ -105,7 +105,7 @@ public class LPCSpeech {
 	}
 
 	private static short LPC_TO_PCM(int ylatch) {
-		ylatch <<= 7;
+		ylatch <<= 6;
 		if (ylatch < -0x8000)
 			return -0x8000;
 		if (ylatch >= 0x8000)
@@ -176,7 +176,7 @@ public class LPCSpeech {
 					ns2++;
 			} else {
 				/* get next chirp value */
-				U = (RomTables.chirptable[Math.min(ppctr, RomTables.chirptable.length - 1)]) << 8;
+				U = (RomTables.chirptable[Math.min(ppctr, RomTables.chirptable.length - 1)]) << 7;
 
 				if (oldParams.pitch != 0)
 					ppctr = (ppctr + 1) % oldParams.pitch;
@@ -207,14 +207,14 @@ public class LPCSpeech {
 
 			 */
 
-			y[10] = muldiv(oldParams.energy, U);
+			y[10] = muldiv(oldParams.energy, U >> 2);
 			for (stage = 9; stage >= 0; stage--) {
 				y[stage] = y[stage + 1] - muldiv(oldParams.kVal[stage], b[stage]);
 				b[stage + 1] = b[stage] + muldiv(oldParams.kVal[stage], y[stage]);
 			}
 
-			b[0] = y[0];
 			samp = b[0];
+			b[0] = y[0];
 			
 			if (send) {
 				for (Object o : senders) {
@@ -290,8 +290,8 @@ public class LPCSpeech {
 			}
 
 			/* translate energy */
-			params.energy = RomTables.energytable[params.energyParam] >> 6; // 15-bit to 9-bit
-//			params.energy = RomTables.energytable[params.energyParam]; // 15-bit to 9-bit
+//			params.energy = RomTables.energytable[params.energyParam] >> 6; // 15-bit to 9-bit
+			params.energy = RomTables.energytable[params.energyParam]; // 15-bit to 9-bit
 
 			/* Get K parameters */
 

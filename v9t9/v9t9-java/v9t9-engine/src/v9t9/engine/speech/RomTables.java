@@ -209,30 +209,30 @@ public class RomTables {
 
 	static {
 		
-		for (int i = 0; i < pitchtable.length; i++) {
-			short nv = (short) (pitchtablex[i] << 8);
-			pitchtable[i] = nv; 
-		}
-		
-		for (int i = 0; i < energytable.length; i++) {
-			short nv = (short) (energytablex[i] << 4);
-			energytable[i] = nv; 
-		}
-		
-		for (int i = 0; i < k1table.length; i++) {
-			short nv = (short) Math.round(k1tablef[i] * 0x7fff);
-			k1table[i] = nv; 
-		}
-		
-		for (int i = 0; i < k2table.length; i++) {
-			short nv = (short) Math.round(k2tablef[i] * 0x7fff);
-			k2table[i] = nv; 
-		}
-		
-		for (int i = 0; i < k3table.length; i++) {
-			short nv = (short) Math.round(k3tablef[i] * 0x7fff);
-			k3table[i] = nv; 
-		}
+//		for (int i = 0; i < pitchtable.length; i++) {
+//			short nv = (short) (pitchtablex[i] << 8);
+//			pitchtable[i] = nv; 
+//		}
+//		
+//		for (int i = 0; i < energytable.length; i++) {
+//			short nv = (short) (energytablex[i] << 4);
+//			energytable[i] = nv; 
+//		}
+//		
+//		for (int i = 0; i < k1table.length; i++) {
+//			short nv = (short) Math.round(k1tablef[i] * 0x7fff);
+//			k1table[i] = nv; 
+//		}
+//		
+//		for (int i = 0; i < k2table.length; i++) {
+//			short nv = (short) Math.round(k2tablef[i] * 0x7fff);
+//			k2table[i] = nv; 
+//		}
+//		
+//		for (int i = 0; i < k3table.length; i++) {
+//			short nv = (short) Math.round(k3tablef[i] * 0x7fff);
+//			k3table[i] = nv; 
+//		}
 	}
 
 
