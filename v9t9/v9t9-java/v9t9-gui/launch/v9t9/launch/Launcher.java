@@ -144,16 +144,16 @@ public class Launcher {
 		//System.err.println("Updating Java library path to: " + newJavaLibPath);
 		System.setProperty("java.library.path", newJavaLibPath.toString());
 
-		try {
-			// ugly hack to force re-loading the path
-			Field fieldSysPath = ClassLoader.class.getDeclaredField("sys_paths");
-			fieldSysPath.setAccessible(true);
-			fieldSysPath.set(null, null);
-		} catch (Throwable t) {
-			t.printStackTrace();
-			System.err.println("Updating Java library path to: " + newJavaLibPath);
-			System.err.println("\nCould not modify java.library.path: please invoke:\n\n\texport V9T9_VMARGS=\"-Djava.library.path=" + newJavaLibPath + "\"'\n\nand try again.");
-		}
+//		try {
+//			// ugly hack to force re-loading the path
+//			Field fieldSysPath = ClassLoader.class.getDeclaredField("sys_paths");
+//			fieldSysPath.setAccessible(true);
+//			fieldSysPath.set(null, null);
+//		} catch (Throwable t) {
+//			t.printStackTrace();
+//			System.err.println("Updating Java library path to: " + newJavaLibPath);
+//			System.err.println("\nCould not modify java.library.path: please invoke:\n\n\texport V9T9_VMARGS=\"-Djava.library.path=" + newJavaLibPath + "\"'\n\nand try again.");
+//		}
 		
 		Class<?> klass = null;
 		Method main = null;
