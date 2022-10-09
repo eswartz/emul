@@ -122,6 +122,9 @@ Create TextFunctions
     'v-clear ,           ' txt-clear ,
     'v-hchar ,           ' txt-hchar ,
     'v-vchar ,           ' txt-vchar ,
+    'v-readpixel ,       ' txt-readchar ,
+    'v-drawpixel ,       ' txt-drawchar ,
+    'v-drawline ,        ' slow-drawline ,
     0 , 
 
 
@@ -247,6 +250,9 @@ Create Text2Functions
     'v-clear ,          ' txt2-clear     ,
     'v-hchar ,          ' txt2-hchar     ,      
     'v-vchar ,          ' txt2-vchar     ,      
+    'v-readpixel ,      ' txt-readchar   ,
+    'v-drawpixel ,      ' txt2-drawchar  ,
+    'v-drawline ,       ' slow-drawline  ,
     0 ,
 
 Create Text2ModeParams

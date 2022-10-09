@@ -87,8 +87,20 @@ Create MultiModeParams
     'v-setupmode ,       ' multi-setupmode ,        
     'v-updatecolors ,    ' txt-updatecolors ,
     'v-drawchar ,        ' multi-drawchar ,
+    'v-readpixel ,       ' multi-readchar ,
+    'v-drawpixel ,       ' multi-drawchar ,
+    'v-drawline ,        ' slow-drawline ,
     
     0 , 
+
+: multi-readchar  ( x y -- )  
+    ( silly example )
+    \  ((y >> 3) << 8) + (y & 7) + ((x >> 1) << 3)
+    8 u/mod  8 LSHIFT  swap  7 AND  +  
+    swap  1 RSHIFT  3 LSHIFT +
+    v-patts @  + 
+    vwaddr  VDPRD c@  
+;
 
 : multi-drawchar  ( ch x y -- )  
     ( silly example )
@@ -121,6 +133,9 @@ Create MultiFunctions
     'v-clear ,           ' multi-setupmode ,
     'v-hchar ,           ' txt-hchar ,
     'v-vchar ,           ' txt-vchar ,
+    'v-readpixel ,       ' txt-readchar ,
+    'v-drawpixel ,       ' txt-drawchar ,
+    'v-drawline ,        ' slow-drawline ,
     0 , 
 
 

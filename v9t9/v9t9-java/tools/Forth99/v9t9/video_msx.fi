@@ -386,6 +386,59 @@ false Constant msx-use-drawchar-accel
     then  
 ;
 
+
+: msx-readpixel-16 ( x y -- c )
+    msx-pixaddr  2 lshift  :> shift  vsetbank
+    
+    vc@  4 shift -  urshift
+	$f and
+;
+
+: msx-drawpixel-16 ( c x y -- )
+    msx-pixaddr  2 lshift  :> shift  vsetbank :> addr
+
+    $f0 shift  urshift  :> mask
+    $f and  
+    4 shift -  lshift          ( c' )
+    addr vc@                   ( vb c' )
+    mask nand  or
+    addr vc!
+;
+
+
+: msx-readpixel-4 ( x y -- c )
+    msx-pixaddr  2*  :> shift  vsetbank
+    
+    vc@  6 shift -  urshift
+	$3 and
+;
+
+: msx-drawpixel-4 ( c x y -- )
+    msx-pixaddr  2*  :> shift  vsetbank :> addr
+
+    $c0 shift  urshift  :> mask
+    $3 and
+    6 shift -  lshift          ( c' )
+    addr vc@                   ( vb c' )
+    mask nand  or
+    addr vc!
+;
+
+
+: msx-readpixel-256 ( x y -- c )
+    msx-pixaddr drop  vsetbank :> addr
+
+    addr vc@
+;
+
+: msx-drawpixel-256 ( xt x y -- )
+    msx-pixaddr drop  vsetbank :> addr
+
+    addr vc!
+;
+
+
+
 : msx-set-patt-reg
     v-rwpage c@  5 lshift  2 (vr!)   \ actually screen reg
 ;
@@ -410,6 +463,7 @@ Create MsxBaseFunctions
     'v-setupregs ,           ' msx-setupregs ,
     'v-setupmode ,           ' msx-setupmode ,
     'v-updatecolors ,        ' msx-updatecolors ,
+	'v-drawline ,            ' slow-drawline ,
     0 ,
     
 
@@ -448,9 +502,10 @@ Create Gfx4ModeParams
     v-stride  , $80 ,     msx-shift   , 1 ,       msx-mask , $1  ,    msx-colmask , $f ,
 
 msx-use-drawchar-accel not [if]
-    'v-drawchar ,            ' msx-drawchar-16 ,
+    'v-drawchar ,        ' msx-drawchar-16 ,
 [then]
-
+	'v-readpixel ,       ' msx-readpixel-16 ,
+	'v-drawpixel ,       ' msx-drawpixel-16 ,
     0 ,
     
     
@@ -477,9 +532,10 @@ Create Gfx6ModeParams
     v-stride  , $100 ,    msx-shift   , 1 ,       msx-mask , $1  ,    msx-colmask , $f ,
     
 msx-use-drawchar-accel not [if]
-    'v-drawchar ,            ' msx-drawchar-16 ,
+    'v-drawchar ,        ' msx-drawchar-16 ,
 [then]
-
+	'v-readpixel ,       ' msx-readpixel-16 ,
+	'v-drawpixel ,       ' msx-drawpixel-16 ,
     0 ,
     
     
@@ -490,7 +546,6 @@ msx-use-drawchar-accel not [if]
     Gfx6ModeParams v-set-alloc-list
     $0AA0 write-vmoderegs
 ;
-
 
 
 
@@ -508,8 +563,10 @@ Create Gfx5ModeParams
     v-stride  , $80 ,     msx-shift   , 2 ,       msx-mask , $3  ,    msx-colmask , $3 , 
     
 msx-use-drawchar-accel not [if]
-    'v-drawchar ,            ' msx-drawchar-4 ,
+    'v-drawchar ,        ' msx-drawchar-4 ,
 [then]
+	'v-readpixel ,       ' msx-readpixel-4 ,
+	'v-drawpixel ,       ' msx-drawpixel-4 ,
 
     0 ,
     
@@ -538,8 +595,10 @@ Create Gfx7ModeParams
     v-stride  , $100 ,    msx-shift   , 0 ,       msx-mask , $0  ,    msx-colmask , $ff , 
     
 msx-use-drawchar-accel not [if]
-    'v-drawchar ,            ' msx-drawchar-256 ,
+    'v-drawchar ,        ' msx-drawchar-256 ,
 [then]
+	'v-readpixel ,       ' msx-readpixel-256 ,
+	'v-drawpixel ,       ' msx-drawpixel-256 ,
 
     0 ,
     

@@ -59,7 +59,10 @@ v-data
     +field  'v-clear        ( w h x y -- )
     +field  'v-hchar        ( ch len x y -- )
     +field  'v-vchar        ( ch len x y -- )
-
+	+field  'v-readpixel    ( x y -- )
+	+field  'v-drawpixel    ( c x y -- )
+	+field  'v-drawline     ( xt x0 y0 x1 y1 -- )
+	
 |+  +field  v-stride        \ row stride in bytes
     +field  msx-shift       \ shift for pixel >> byte
     +field  msx-mask        \ mask for pixel of byte
@@ -504,7 +507,51 @@ include video_msx.fi
     'v-setupregs @  execute
 ;
 
+:   pixel!	( c x y -- )
+    'v-drawpixel @  execute
+;
+
+:   pixel@	( x y -- c )
+    'v-readpixel @  execute
+;
+
+:   (line) ( x0 y0 x1 y1 xt -- )
+    'v-drawline @  execute
+;
+
+:	op-draw ( x y -- )
+	fg@ rot rot pixel!
+;
+
+:	line ( x0 y0 x1 y1 xt -- )
+	['] op-draw (line)
+;
+
 EXPORT>
+
+::  slow-drawline   ( x0 y0 x1 y1 xt -- )
+	x1 x0 - abs               :> dx
+	1  x0 x1 > if negate then :> sx
+	y1 y0 - abs negate        :> dy
+	1  y0 y1 > if negate then :> sy
+	dx dy +                   :> error
+	0                         :> e2
+	begin
+		x0 y0  xt execute
+		x0 x1 =  y0 y1 =  and  if exit then
+		error 2*  to e2 
+		e2 dy >= if
+			x0 x1 =  if exit then
+			error dy +  to error
+			x0 sx +     to x0 
+		then 	
+		e2 dx <= if 
+			y0 y1 =  if exit then 
+			error dx +  to error 
+			y0 sy +     to y0 
+		then 	
+	again
+;
 
 :   video-init
     \ reset latches

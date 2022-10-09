@@ -145,6 +145,33 @@
     drop
 ;
 
+: bit-readpixel   ( x y -- c )
+    bit-pixaddr  :> shift  :> addr
+    
+    addr  v-patts @ +  :> patt
+    patt vc@
+    shift urshift
+    1 and  
+;
+
+: bit-drawpixel   ( c x y -- )
+    bit-pixaddr  :> shift  :> addr
+    
+    :> bit 
+    
+    addr  v-patts @ +  :> patt
+    patt vc@
+    $80 shift urshift
+    bit if or else nand then 
+    patt vc!
+
+    v-mono c@ 0= if
+		bit if
+	        color-byte  addr  v-colors @ +  vc!
+	    then
+	then
+;
+
 
 : bit-set-patt-reg
     v-patts @  11 URSHIFT   3 OR
@@ -176,6 +203,9 @@ Create BitFunctions
     'v-blinkcursor ,     ' bit-blinkcursor ,
     'v-setfont ,         ' bit-setfont ,
     'v-clear ,           ' bit-clear ,
+    'v-readpixel ,       ' bit-readpixel ,          
+    'v-drawpixel ,       ' bit-drawpixel ,          
+    'v-drawline ,        ' slow-drawline ,              
     0 , 
 
 
