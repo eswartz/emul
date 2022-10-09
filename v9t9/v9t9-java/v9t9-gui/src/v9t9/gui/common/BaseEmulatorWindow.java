@@ -107,7 +107,8 @@ public abstract class BaseEmulatorWindow {
 		String filename = openFileSelectionDialog(title, dir.getAbsolutePath(), fileName, 
 				isSave, extensions);
 		if (filename != null) {
-			configVar.setString(new File(filename).getParent());
+//			configVar.setString(new File(filename).getParent());
+			configVar.setString(filename);
 		}
 		return filename;
 	}
@@ -225,8 +226,8 @@ public abstract class BaseEmulatorWindow {
 	
 	public static File getUniqueFile(String filenameBase) {
 		File fileBase = new File(filenameBase);
-		File dir = fileBase.getParentFile();
-		String base = fileBase.getName();
+		File dir = fileBase.isDirectory() ? fileBase : fileBase.getParentFile();
+		String base = fileBase.isDirectory() ? "screen" : fileBase.getName();
 		int extPtr = base.lastIndexOf('.');
 		if (extPtr < 0) extPtr = base.length();
 		String ext = base.substring(extPtr);

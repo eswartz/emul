@@ -310,7 +310,7 @@ public class SwtWindow extends BaseEmulatorWindow {
 			.indent(0, 0)
 			.align(SWT.CENTER, SWT.CENTER)
 			.grab(true, true)
-			.minSize(128, 64)
+			.minSize(128, 128)
 			.applyTo(videoControl);
 		
 		videoRenderer.addMouseEventListener(new MouseAdapter() {

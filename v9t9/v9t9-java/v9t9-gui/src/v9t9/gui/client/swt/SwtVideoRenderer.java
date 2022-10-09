@@ -593,6 +593,7 @@ public class SwtVideoRenderer implements IVideoRenderer, ICanvasListener, ISwtVi
 					imageData.data[i+1] = rgb[1];
 					imageData.data[i+2] = rgb[2];
 				}
+				buffer.rewind();
 				return imageData;
 			}
 		}
