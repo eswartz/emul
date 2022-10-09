@@ -34,13 +34,20 @@
     768 0 do i  VDPWD c!  loop
 ;
 
+: >patt ( addr -- patt )
+	v-patts @ + 
+;
+: >color ( addr -- color )
+	v-colors @ +
+;
+
 : bit-drawchar ( ch x y -- )
     \ simple-stupid 8x8 only version 
     bit-chaddr  :> addr
-    >v-fontaddr  addr v-patts @ +  v-fntheight c@  +gvmove  
+    >v-fontaddr  addr >patt  v-fntheight c@  +gvmove  
     
     v-mono c@ 0= if
-        addr  v-colors @ +
+        addr >color
         v-fntheight c@  
         color-byte +vfill
     then
@@ -58,7 +65,7 @@
 
 : bit-blinkcursor ( x y -- )
     bit-chaddr  0 :> shift  
-                v-patts @ + :> addr     \ only change patt
+                >patt :> addr     \ only change patt
 
     addr vsetbank  to addr
 
@@ -89,10 +96,10 @@
     x y  bit-pixaddr  drop  :> addr 
     
     ( # bytes = w/8 * 8 )
-    addr  v-patts @ +   w  0  +vfill 
+    addr >patt   w  0  +vfill 
     
     v-mono c@ 0= if
-        addr  v-colors @ +   w  color-byte  +vfill
+        addr >color   w  color-byte  +vfill
     then
 ;
 
@@ -145,29 +152,40 @@
     drop
 ;
 
+: >pixel1 ( shift -- mask )
+	$80 swap urshift
+;
+
 : bit-readpixel   ( x y -- c )
     bit-pixaddr  :> shift  :> addr
     
-    addr  v-patts @ +  :> patt
-    patt vc@
-    shift urshift
-    1 and  
+    shift addr >patt vc@ >r  >pixel1  r> and  ( mask )
+    
+    v-mono c@ if
+    	if fg@ else bg@ then
+   	else
+    	( if on, take the fg, else the bg )
+        >r addr >color  vc@
+    	r> if
+    		4 urshift
+    	then
+        $f and
+	then
 ;
 
 : bit-drawpixel   ( c x y -- )
     bit-pixaddr  :> shift  :> addr
     
-    :> bit 
+    :> color
     
-    addr  v-patts @ +  :> patt
-    patt vc@
-    $80 shift urshift
-    bit if or else nand then 
-    patt vc!
-
+    addr >patt  dup  vc@  dup :> orig  
+    shift >pixel1 
+    color  if or else nand then  dup :> edited 
+    swap  vc!
+    
     v-mono c@ 0= if
-		bit if
-	        color-byte  addr  v-colors @ +  vc!
+    	orig edited <> if 
+	        color-byte  addr >color  vc!
 	    then
 	then
 ;

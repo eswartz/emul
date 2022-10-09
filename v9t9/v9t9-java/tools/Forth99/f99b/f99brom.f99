@@ -152,22 +152,6 @@ loop
 
 [THEN]
 
-: rnd ( max -- rnd )
-	(rnd) swap  u/mod drop
-;
-
-: lines
-	v-width @ :> vw
-	v-height @ :> vh
-	begin
-		256 rnd fg!
-		vw rnd
-		vh rnd
-		vw rnd
-		vh rnd
-		line
-	again
-;
 
 s" TESTING" environment? [IF]
 | : tests-completed

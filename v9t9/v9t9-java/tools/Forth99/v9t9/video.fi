@@ -69,12 +69,14 @@ v-data
     +field  msx-colmask     \ mask for available colors
 
     +field  msx-rowsperbankmask  \ mask for detecting bank crossings  
-    
+
     20 +Nfield v-regsave    \ saved registers
 
 dup constant v-data0
 
 dup v-data - negate  Constant v-data-size
+
+    +field  'v-pixelop      ( x y -- )
 
 ramptr ! 
 
@@ -523,8 +525,22 @@ include video_msx.fi
 	fg@ rot rot pixel!
 ;
 
-:	line ( x0 y0 x1 y1 xt -- )
-	['] op-draw (line)
+::	op-xor ( x y -- )
+	x y pixel@
+	fg@ xor 
+	x y pixel!
+;
+
+:	pixelop!	( xt -- )
+	'v-pixelop !
+;
+
+:	pixelop@	( -- xt )
+	'v-pixelop @
+;
+
+:	line ( x0 y0 x1 y1 -- )
+	pixelop@  (line)
 ;
 
 EXPORT>
@@ -563,10 +579,12 @@ EXPORT>
         
     text mode
 
+	['] op-draw  pixelop!
+
     $1 fg!
     $A7 bg!     \ works for gfx7 mode
     
-    font8x8    
+    font8x8 
     
 ;
 
