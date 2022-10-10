@@ -1091,13 +1091,20 @@ public class InterpreterF99b implements IInterpreter {
         	cpu.push((short) (c ? -1 : 0));
         	return false;
         	}
+		// add/sub
 		case Imath_start:
-		case Imath_start+1:
+		case Imath_start+1: {
+        	int r = cpu.popd();
+        	int l = cpu.popd();
+        	cpu.pushd(binOp_d(l, r, ins.getInst() - Idmath_start));
+        	return false;
+		}
+		// shift
 		case Imath_start+2:
 		case Imath_start+3:
 		case Imath_start+4:
 		case Imath_start+5: {
-        	int r = cpu.popd();
+        	int r = cpu.pop();
         	int l = cpu.popd();
         	cpu.pushd(binOp_d(l, r, ins.getInst() - Idmath_start));
         	return false;
