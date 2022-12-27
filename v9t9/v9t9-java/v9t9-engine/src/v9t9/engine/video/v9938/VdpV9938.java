@@ -1243,12 +1243,9 @@ public class VdpV9938 extends VdpTMS9918A implements IVdpV9938 {
 		return super.isBitmapMode() || (modeNumber == MODE_GRAPHICS3);
 	}
 	
-	/** For the V9938, only the on-board 128K is used for display.
-	 * Also, when the graphics mode is a standard 9918A mode, the
-	 * old masking applies. */
 	@Override
 	protected int getModeAddressMask() {
-		return isEnhancedMode() || (vdpregs[8] & R8_VR) != 0 ? 0x1ffff : 0x3fff;
+		return (vdpregs[8] & R8_VR) != 0 ? 0x1ffff : 0x3fff;
 	}
 	
 	/* (non-Javadoc)
@@ -1294,17 +1291,18 @@ public class VdpV9938 extends VdpTMS9918A implements IVdpV9938 {
 	public int getColorTableBase() {
 		switch (getModeNumber()) {
 		case MODE_BITMAP:
+			return ((vdpregs[3] & 0x80) << 6) & getModeAddressMask();
 		case MODE_GRAPHICS3:
-			return (super.getColorTableBase() | ((vdpregs[10] & 0x7) * 0x4000)) & getModeAddressMask();
+			return (((vdpregs[10] & 0x07) << 14) | ((vdpregs[3] & 0x80) << 6)) & getModeAddressMask();
 		case MODE_TEXT2:
-			return (((vdpregs[10] << 8) | (vdpregs[3] & 0xf8)) << 6) & getModeAddressMask();
+			return (((vdpregs[10] & 0x07) << 14) | ((vdpregs[3] & 0xff) << 6)) & getModeAddressMask();
 		case MODE_GRAPHICS4:
 		case MODE_GRAPHICS5:
 		case MODE_GRAPHICS6:
 		case MODE_GRAPHICS7:
 			return 0;
 		default:
-			return ((((vdpregs[10] & 0x7) << 8) | (vdpregs[3] & 0xff)) << 6) & getModeAddressMask();
+			return (((vdpregs[10] & 0x7) << 14) | ((int)(vdpregs[3] & 0xff) << 6)) & getModeAddressMask();
 		}
 	}
 	
@@ -1329,9 +1327,12 @@ public class VdpV9938 extends VdpTMS9918A implements IVdpV9938 {
 	@Override
 	public int getPatternTableBase() {
 		switch (getModeNumber()) {
+		case MODE_TEXT2:
+			return ((vdpregs[4] & 0x3f) << 11) & getModeAddressMask();
 		case MODE_BITMAP:
+			return ((vdpregs[4] & 0x38) << 11) & getModeAddressMask();
 		case MODE_GRAPHICS3:
-			return (super.getPatternTableBase() | ((vdpregs[4] & 0x38) * 0x800)) & getModeAddressMask();
+			return ((vdpregs[4] & 0x38) << 11) & getModeAddressMask();
 		case MODE_GRAPHICS4:
 		case MODE_GRAPHICS5:
 			// paging! (A15, A16)

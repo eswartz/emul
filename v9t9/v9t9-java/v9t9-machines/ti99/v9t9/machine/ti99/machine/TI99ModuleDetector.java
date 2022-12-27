@@ -689,11 +689,11 @@ public class TI99ModuleDetector implements IModuleDetector {
 		}
 		if (!found) {
 			if (fileSize > 0x3e00) {
-				// probably a new-format reversed PBX module
+				// // probably a new-format reversed PBX module
 				info = MemoryEntryInfoBuilder.standardModuleRom(fileName)
 						.withOffset(fileOffset)
 						.withBankClass(StdMultiBankedMemoryEntry.class)
-						.isReversed(true)
+//						.isReversed(true)
 						.create(moduleName);
 			} else {
 				if (fileSize % 0x2000 != 0)

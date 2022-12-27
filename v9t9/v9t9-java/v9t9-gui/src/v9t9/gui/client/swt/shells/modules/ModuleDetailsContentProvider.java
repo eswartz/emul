@@ -57,10 +57,12 @@ public class ModuleDetailsContentProvider extends TreeNodeContentProvider {
 				"Module MD5 Sum", module.getMD5()));
 		kids.add(md5Sum);
 		
-		TreeNode moduleDatabase = new TreeNode(new Pair<String, String>(
-				"Module Defined By", module.getDatabaseURI().toString()));
-		
-		kids.add(moduleDatabase);
+		if (module.getDatabaseURI() != null) {
+			TreeNode moduleDatabase = new TreeNode(new Pair<String, String>(
+					"Module Defined By", module.getDatabaseURI().toString()));
+			
+			kids.add(moduleDatabase);
+		}
 
 		TreeNode memInfoNode = new TreeNode(module);
 		MemoryEntryInfo[] infos = module.getMemoryEntryInfos();
