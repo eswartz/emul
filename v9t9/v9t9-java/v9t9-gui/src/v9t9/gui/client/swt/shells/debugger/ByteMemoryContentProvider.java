@@ -42,7 +42,9 @@ class ByteMemoryContentProvider implements ILazyContentProvider {
 		range = (MemoryRange) newInput;
 		if (range != null) {
 			changes = new MemoryRangeChanges(range);
-			changes.attachMemoryListener();
+			if (range.canModify(0)) {
+				changes.attachMemoryListener();
+			}
 
 			// clear
 			tableViewer.setItemCount(0);
@@ -65,7 +67,7 @@ class ByteMemoryContentProvider implements ILazyContentProvider {
 		//System.out.println(index);
 		int addr = index * size;
 		MemoryRow row = (MemoryRow) tableViewer.getElementAt(index);
-		if (row == null || changes.isTouched(addr, addr + size))
+		if (row == null || changes == null || changes.isTouched(addr, addr + size))
 			row = new MemoryRow(addr, range);
 		
 		return row;
