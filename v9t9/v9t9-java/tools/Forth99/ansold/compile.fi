@@ -308,6 +308,15 @@ User csp
     ?comp
     ['] (u+loop) loop-compile
 ; immediate target-only
+[ELSE]
+\ forward to presumed sign-safe version
+: ULOOP
+    postpone LOOP
+; immediate target-only
+
+: U+LOOP
+	postpone +LOOP
+; immediate target-only
 [THEN]
 
 [THEN]
