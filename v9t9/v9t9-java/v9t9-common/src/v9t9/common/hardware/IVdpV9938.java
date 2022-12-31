@@ -23,7 +23,9 @@ package v9t9.common.hardware;
  *
  */
 public interface IVdpV9938 extends IVdpTMS9918A {
-
+	/** Get the mask implied by VR2 for the current mode */
+	int getPackedModeScreenAddrMask();
+	
 	/** Get time when blinking/flipping is ON in ms */
 	int getBlinkOnPeriod();
 	/** Get time when blinking/flipping is OFF in ms */

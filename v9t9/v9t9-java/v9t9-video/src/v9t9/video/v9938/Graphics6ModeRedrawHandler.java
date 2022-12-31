@@ -31,9 +31,9 @@ public class Graphics6ModeRedrawHandler extends PackedBitmapGraphicsModeRedrawHa
 
 	@Override
 	protected void init() {
-		rowstride = 256;
+		rowstrideshift = 8;
 		blockshift = 2;
-		blockstride = 64;
+		blockstrideshift = 6;
 		blockcount = (info.vdpregs[9] & 0x80) != 0 ? 64*27 : 1536;
 		colshift = 1;
 	}
@@ -42,8 +42,8 @@ public class Graphics6ModeRedrawHandler extends PackedBitmapGraphicsModeRedrawHa
 		info.canvas.draw8x8BitmapTwoColorBlock(
 				c + (interlaced ? 512 : 0), r,
 			 info.vdp.getByteReadMemoryAccess(
-					(modeInfo.patt.base + rowstride * r + (c >> 1)) ^ pageOffset),
-			rowstride);
+					(modeInfo.patt.base + (((r << rowstrideshift) + (c >> 1)) & pattAddrMask)) ^ pageOffset),
+			1 << rowstrideshift);
 	}
 	/* (non-Javadoc)
 	 * @see v9t9.video.v9938.PackedBitmapGraphicsModeRedrawHandler#drawPixels(int, int, int, boolean)
@@ -53,7 +53,7 @@ public class Graphics6ModeRedrawHandler extends PackedBitmapGraphicsModeRedrawHa
 		info.canvas.draw8x8BitmapTwoColorByte(
 				x + (interlaced ? 512 : 0), y,
 			 info.vdp.getByteReadMemoryAccess(
-					(modeInfo.patt.base + rowstride * y + (x >> 1)) ^ pageOffset));
+					(modeInfo.patt.base + (((y << rowstrideshift) + (x >> 1)) & pattAddrMask)) ^ pageOffset));
 		
 	}
 }

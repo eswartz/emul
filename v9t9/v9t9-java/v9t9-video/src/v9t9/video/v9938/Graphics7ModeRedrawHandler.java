@@ -29,9 +29,9 @@ public class Graphics7ModeRedrawHandler extends PackedBitmapGraphicsModeRedrawHa
 
 	@Override
 	protected void init() {
-		rowstride = 256;
+		rowstrideshift = 8;
 		blockshift = 3;
-		blockstride = 32;
+		blockstrideshift = 5;
 		blockcount = (info.vdpregs[9] & 0x80) != 0 ? 32*27 : 768;
 		colshift = 0;
 	}
@@ -40,8 +40,8 @@ public class Graphics7ModeRedrawHandler extends PackedBitmapGraphicsModeRedrawHa
 		info.canvas.draw8x8BitmapRGB332ColorBlock(
 				c + (interlaced ? 256 : 0), r,
 			 info.vdp.getByteReadMemoryAccess(
-					(modeInfo.patt.base + rowstride * r + c) ^ pageOffset),
-			rowstride);
+					 (modeInfo.patt.base + (((r << rowstrideshift) + c) & pattAddrMask)) ^ pageOffset),
+			1 << rowstrideshift);
 	}
 	
 	/* (non-Javadoc)
@@ -52,7 +52,7 @@ public class Graphics7ModeRedrawHandler extends PackedBitmapGraphicsModeRedrawHa
 		info.canvas.draw8x8BitmapRGB332ColorByte(
 				x + (interlaced ? 256 : 0), y,
 			 info.vdp.getByteReadMemoryAccess(
-					(modeInfo.patt.base + rowstride * y + x) ^ pageOffset));		
+					(modeInfo.patt.base + (((y << rowstrideshift) + x) & pattAddrMask)) ^ pageOffset));		
 	}
 
 	/** Backdrop isn't a normal color */

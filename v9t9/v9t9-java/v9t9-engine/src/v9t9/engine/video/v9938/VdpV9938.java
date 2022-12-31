@@ -315,6 +315,22 @@ public class VdpV9938 extends VdpTMS9918A implements IVdpV9938 {
 		else
 			currentcycles = targetRate;
 	}
+
+
+	@Override
+	public int getPackedModeScreenAddrMask() {
+		int bits = vdpregs[2] & 0x1f;
+		switch (getModeNumber()) {
+		case MODE_GRAPHICS4:
+		case MODE_GRAPHICS5:
+			return (bits << 10) | 0x3ff; 
+		case MODE_GRAPHICS6:
+		case MODE_GRAPHICS7:
+			return (bits << 11) | 0x7ff; 
+		default:
+			return ~0;
+		}
+	}
 	
 	/* (non-Javadoc)
 	 * @see v9t9.common.hardware.IVdpV9938#addAccelListener(v9t9.common.hardware.IVdpV9938.IAccelListener)
@@ -1260,6 +1276,7 @@ public class VdpV9938 extends VdpTMS9918A implements IVdpV9938 {
 		case MODE_GRAPHICS5:
 		case MODE_GRAPHICS6:
 		case MODE_GRAPHICS7:
+			// although it's VDPR2, we use it as the pattern table base 
 			return 0;
 		default:
 			return super.getScreenTableBase();
@@ -1300,6 +1317,7 @@ public class VdpV9938 extends VdpTMS9918A implements IVdpV9938 {
 		case MODE_GRAPHICS5:
 		case MODE_GRAPHICS6:
 		case MODE_GRAPHICS7:
+			// we use the pattern table base 
 			return 0;
 		default:
 			return (((vdpregs[10] & 0x7) << 14) | ((int)(vdpregs[3] & 0xff) << 6)) & getModeAddressMask();

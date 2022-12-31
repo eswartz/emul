@@ -31,18 +31,31 @@ import v9t9.video.common.VdpModeInfo;
 public abstract class PackedBitmapGraphicsModeRedrawHandler extends BaseRedrawHandler 
 	implements IVdpModeBlockRedrawHandler, IVdpModeRowRedrawHandler {
 
-	protected int rowstride;
+	// shift of pixels per row
+	protected int rowstrideshift;
 	protected int blockshift;
-	protected int blockstride;
+	// shift of blocks per row
+	protected int blockstrideshift;
 	protected int blockcount;
 	protected int colshift;
-	private int pageOffset;	
+	protected int pageOffset;	
+	protected int pattAddrMask;
 	
+	/**
+	 * Touches to the pattern area (as we consider it, though it's really the screen area
+	 * per the V9938 registers) modify the screen bitmap, so we know what blocks
+	 * to update.  
+	 * 
+	 * This will modify the physical block that was apparently modified,
+	 * while #updateCanvas will adapt this to the {@link #pattAddrMask}.
+	 */
 	protected class ScreenBitmapTouchHandler implements VdpTouchHandler {
+		int rowstridemask = ~(~0 << rowstrideshift);
 		public void modify(int offs) {
-			int row = (offs / rowstride) >> 3;
-			int col = (offs % rowstride) >> blockshift;
-			info.changes.screen.set(row * blockstride + col);
+			int row = (offs >> rowstrideshift) >> 3;
+			int col = (offs & rowstridemask) >> blockshift;
+			int addr = (row << blockstrideshift) + col;
+			info.changes.screen.set(addr);
 			info.changes.changed = true;
 		}
 		
@@ -52,6 +65,8 @@ public abstract class PackedBitmapGraphicsModeRedrawHandler extends BaseRedrawHa
 		super(info, modeInfo);
 
 		init();
+		// the mask is on the screen register but we treat these as pattern changes
+		pattAddrMask = ((IVdpV9938) info.vdp).getPackedModeScreenAddrMask();
 		info.touch.patt = new ScreenBitmapTouchHandler();
 	}
 		
@@ -62,7 +77,7 @@ public abstract class PackedBitmapGraphicsModeRedrawHandler extends BaseRedrawHa
 	 */
 	@Override
 	public int getCharsPerRow() {
-		return blockstride;
+		return 1 << blockstrideshift;
 	}
 	
 	@Override
@@ -72,6 +87,7 @@ public abstract class PackedBitmapGraphicsModeRedrawHandler extends BaseRedrawHa
 			int pageSize = info.vdp.getGraphicsPageSize();
 			int pattBase = modeInfo.patt.base ^ pageSize;
 			if (pattBase <= addr && addr < pattBase + modeInfo.patt.size) {
+				// trigger our listener for the other page
 	    		info.touch.patt.modify(addr - pattBase);
 	    		visible = true;
 	    	}
@@ -79,8 +95,34 @@ public abstract class PackedBitmapGraphicsModeRedrawHandler extends BaseRedrawHa
 			
 		return super.touch(addr) | visible;
 	}
+	
 	public void prepareUpdate() {
-		// we directly detect screen & row changes already
+		// The pattAddrMask determines which address lines
+		// are available -- this means changes to patterns might
+		// actually affect multiple blocks (repeated) on screen.
+		
+		// the mask is on the screen register but we treat these as pattern changes
+		pattAddrMask = ((IVdpV9938) info.vdp).getPackedModeScreenAddrMask();
+		
+		int minAddr = (info.canvas.getMinY() / 8) << blockstrideshift;
+		int maxAddr = ((info.canvas.getMaxY() + 7) / 8) << blockstrideshift;
+		
+		int bpm = (pattAddrMask >> blockshift);
+		for (int addr = minAddr; addr < maxAddr; addr++) {
+//			int row = (addr / rowstride) >> 3;
+//			int col = (addr % rowstride) >> blockshift;
+//			int screenAddr = row * blockstride + col;
+			if ((addr & bpm) != addr && info.changes.screen.get(addr & bpm)) {
+				info.changes.screen.set(addr);
+			}
+		}
+//		
+//		
+//		int row = (offs / rowstride) >> 3;
+//		int col = (offs % rowstride) >> blockshift;
+//		info.changes.screen.set(row * blockstride + col);
+//		info.changes.changed = true;
+		
 	}
 	
 	public int updateCanvas(RedrawBlock[] blocks) {
@@ -92,6 +134,7 @@ public abstract class PackedBitmapGraphicsModeRedrawHandler extends BaseRedrawHa
 		int minY = info.canvas.getMinY();
 		int maxY = info.canvas.getMaxY();
 		
+		int blockstridemask = ~(~0 << blockstrideshift);
 		int count = 0;
 		int screenSize = blockcount;
 		for (int i = info.changes.screen.nextSetBit(0); 
@@ -100,11 +143,11 @@ public abstract class PackedBitmapGraphicsModeRedrawHandler extends BaseRedrawHa
 		{
 			RedrawBlock block = blocks[count++];
 			
-			block.r = (i / blockstride) << 3;
+			block.r = (i >> blockstrideshift) << 3;
 			if (block.r + 8 < minY || block.r >= maxY)
 				continue;
 			
-			block.c = (i % blockstride) << 3;
+			block.c = (i & blockstridemask) << 3;
 
 			drawBlock(block.r, block.c, 0, false);
 			
@@ -119,6 +162,7 @@ public abstract class PackedBitmapGraphicsModeRedrawHandler extends BaseRedrawHa
 
 	abstract protected void drawBlock(int r, int c, int pageOffset, boolean interlaced);
 	
+	
 	/* (non-Javadoc)
 	 * @see v9t9.video.IVdpModeRowRedrawHandler#updateCanvas(int, int)
 	 */
@@ -131,8 +175,8 @@ public abstract class PackedBitmapGraphicsModeRedrawHandler extends BaseRedrawHa
 		
 //		System.out.println("packed: " + prevScanline + " - " + currentScanline);
 		
-		int roffs = (row >> 3) * blockstride;
-		for (int c = 0; c < blockstride; c++) {
+		int roffs = (row >> 3) << blockstrideshift;
+		for (int c = 1 << blockstrideshift; --c >= 0; ) {
 			int i = roffs + c;
 			if (!info.changes.screen.get(i)) 
 				continue;

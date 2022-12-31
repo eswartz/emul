@@ -16,7 +16,7 @@ package v9t9.common.video;
  * @author ejs
  *
  */
-public class RedrawBlock {
+public final class RedrawBlock {
 	/** pixel offset, 0=top */
 	public int r;
 	/** pixel offset, 0=left */

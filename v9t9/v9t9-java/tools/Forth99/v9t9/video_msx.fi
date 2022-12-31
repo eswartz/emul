@@ -440,7 +440,9 @@ false Constant msx-use-drawchar-accel
 
 
 : msx-set-patt-reg
-    v-rwpage c@  5 lshift  2 (vr!)   \ actually screen reg
+    v-rwpage c@  5 lshift  
+    	$1F or	  \ use all address lines  
+    	2 (vr!)   \ actually screen reg
 ;
 
 : msx-setupregs
